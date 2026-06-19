@@ -1,0 +1,91 @@
+name: Summarize failed CI
+
+# Runs after the CI workflow completes. If it failed, posts a grandma card
+# as a PR comment explaining what went wrong. Runs in base-branch context
+# so it has write permission even for fork PRs.
+#
+# Security: all github.event.* values are passed via env: vars, never
+# interpolated directly into run: scripts.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  actions: read
+
+jobs:
+  summarize:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install grandma
+        run: pip install grandma
+
+      - name: Fetch failed job logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Fetch list of failed jobs — RUN_ID and REPO come from env, not shell interpolation
+          gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" \
+            --jq '[.jobs[] | select(.conclusion == "failure") | {id: .id, name: .name}]' \
+            > /tmp/failed_jobs.json
+
+          echo "Failed jobs:"
+          cat /tmp/failed_jobs.json
+
+          # Fetch logs for each failed job
+          COMBINED=""
+          while IFS= read -r JOB_ID; do
+            JOB_NAME=$(jq -r --argjson id "$JOB_ID" '.[] | select(.id == $id) | .name' /tmp/failed_jobs.json)
+            LOG=$(gh api "repos/${REPO}/actions/jobs/${JOB_ID}/logs" 2>/dev/null | tail -80 || echo "(log unavailable)")
+            printf '\n=== Job: %s ===\n%s\n' "$JOB_NAME" "$LOG" >> /tmp/ci_logs.txt
+          done < <(jq -r '.[].id' /tmp/failed_jobs.json)
+
+          echo "Lines collected: $(wc -l < /tmp/ci_logs.txt)"
+
+      - name: Run grandma on logs
+        run: |
+          cat /tmp/ci_logs.txt | grandma --mode default > /tmp/grandma_card.txt 2>&1 || true
+          echo "--- grandma card ---"
+          cat /tmp/grandma_card.txt
+
+      - name: Find PR number
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          PR_NUMBER=$(gh api "repos/${REPO}/pulls" \
+            --jq "[.[] | select(.head.sha == \"${HEAD_SHA}\")] | .[0].number // empty")
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Post grandma comment on PR
+        if: ${{ steps.pr.outputs.pr_number != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          CARD=$(cat /tmp/grandma_card.txt)
+          # Use printf to avoid any injection via CARD content
+          printf '## 👵 grandma says the CI failed\n\n```\n%s\n```\n\n[Full CI run →](%s)\n' \
+            "$CARD" "$RUN_URL" > /tmp/comment_body.txt
+
+          gh pr comment "$PR_NUMBER" \
+            --repo "$REPO" \
+            --body-file /tmp/comment_body.txt

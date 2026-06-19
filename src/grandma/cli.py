@@ -107,5 +107,23 @@ def serve() -> None:
     _serve()
 
 
+@app.command()
+def doctor() -> None:
+    """Check backend config, API keys, model setup, and connectivity."""
+    from grandma.commands.doctor import run
+    run()
+
+
+@app.command()
+def replay(
+    n: int = typer.Option(6, "--turns", "-n", help="Number of last assistant turns to digest"),
+    mode: str = typer.Option("default", "--mode", "-m", help="Extraction mode: default or deep"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show log path being used"),
+) -> None:
+    """Digest the last Claude Code / Codex / aider / Gemini CLI session."""
+    from grandma.commands.replay import run
+    run(n=n, mode_str=mode, verbose=verbose)
+
+
 if __name__ == "__main__":
     app()
