@@ -110,7 +110,7 @@ uv run pytest -x --tb=short
 # ── 8. Build ───────────────────────────────────────────────────────────────────
 echo "==> Building sdist + wheel"
 rm -rf dist build
-uv run python -m build
+uv build
 
 sdist_count="$(find dist -maxdepth 1 -name "*.tar.gz" | wc -l | tr -d ' ')"
 wheel_count="$(find dist -maxdepth 1 -name "*.whl"    | wc -l | tr -d ' ')"
