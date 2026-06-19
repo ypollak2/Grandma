@@ -3,11 +3,10 @@ import os
 import shutil
 from typing import Tuple
 
-import typer
 from rich.console import Console
 from rich.table import Table
 
-from grandma.extractor import _resolve_backend, _resolve_model, _resolve_api_key, _resolve_base_url
+from grandma.extractor import _resolve_backend, _resolve_model, _resolve_base_url
 
 console = Console()
 
@@ -95,7 +94,7 @@ def run() -> None:
         try:
             from grandma.extractor import extract
             from grandma.models import Mode
-            result = extract("Respond with only the word OK.", mode=Mode.DEFAULT)
+            extract("Respond with only the word OK.", mode=Mode.DEFAULT)
             console.print(f"{_OK} [bold]Backend connectivity:[/bold] live call succeeded")
         except RuntimeError as exc:
             console.print(f"{_FAIL} [bold]Backend connectivity:[/bold] {exc}")

@@ -92,7 +92,7 @@ def _extract_messages_aider(path: Path, n: int = 6) -> List[str]:
 def _extract_messages_log(path: Path, n: int = 6) -> List[str]:
     """Fallback: return last N non-empty lines of any log file."""
     try:
-        lines = [l.strip() for l in path.read_text(errors="replace").splitlines() if l.strip()]
+        lines = [line.strip() for line in path.read_text(errors="replace").splitlines() if line.strip()]
         return lines[-n:]
     except OSError:
         return []
