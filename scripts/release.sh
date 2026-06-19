@@ -133,16 +133,21 @@ echo "    Sdist clean ✅"
 echo "==> Running twine check"
 uvx twine check dist/*
 
-# ── 11. TestPyPI ──────────────────────────────────────────────────────────────
+# ── 11. TestPyPI (optional — skipped if [testpypi] not in ~/.pypirc) ──────────
 echo
 echo "All checks passed. Ready to release ${PROJECT_NAME} ${VERSION}."
-echo "TestPyPI: https://test.pypi.org/project/${PROJECT_NAME}/${VERSION}/"
-confirm "Upload to TestPyPI first?"
-uvx twine upload --repository "$TEST_PYPI_REPOSITORY" dist/*
 
-echo
-echo "Verify: https://test.pypi.org/project/${PROJECT_NAME}/${VERSION}/"
-confirm "Looks good? Upload ${VERSION} to production PyPI?"
+if grep -q '^\[testpypi\]' ~/.pypirc 2>/dev/null; then
+  echo "TestPyPI: https://test.pypi.org/project/${PROJECT_NAME}/${VERSION}/"
+  confirm "Upload to TestPyPI first?"
+  uvx twine upload --repository "$TEST_PYPI_REPOSITORY" dist/*
+  echo
+  echo "Verify: https://test.pypi.org/project/${PROJECT_NAME}/${VERSION}/"
+  confirm "Looks good? Upload ${VERSION} to production PyPI?"
+else
+  echo "  (TestPyPI skipped — no [testpypi] section in ~/.pypirc)"
+  confirm "Upload ${VERSION} to production PyPI?"
+fi
 
 # ── 12. Production PyPI ────────────────────────────────────────────────────────
 uvx twine upload dist/*
