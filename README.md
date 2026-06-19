@@ -1,15 +1,16 @@
 <div align="center">
 
-<!-- Grandma rotates daily via .github/workflows/rotate-grandma.yml -->
-<img src="assets/grandma.png" alt="👵 grandma" width="320" />
+<!-- Mascot rotates daily — see .github/workflows/rotate-grandma.yml -->
+<img src="https://raw.githubusercontent.com/ypollak2/Grandma/main/assets/grandma.png" alt="grandma mascot" width="320" />
 
 # 👵 grandma
 
 **Explain it like you'd tell grandma.**
 
-[![PyPI - Version](https://img.shields.io/pypi/v/grandma.svg)](https://pypi.org/project/grandma)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/grandma.svg)](https://pypi.org/project/grandma)
-[![License: MIT](https://img.shields.io/github/license/ypollak2/Grandma.svg)](https://github.com/ypollak2/Grandma/blob/main/LICENSE)
+[![PyPI - Version](https://img.shields.io/pypi/v/grandma)](https://pypi.org/project/grandma)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/grandma)](https://pypi.org/project/grandma)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/grandma)](https://pypi.org/project/grandma)
+[![License: MIT](https://img.shields.io/github/license/ypollak2/Grandma)](https://github.com/ypollak2/Grandma/blob/main/LICENSE)
 [![CI](https://github.com/ypollak2/Grandma/actions/workflows/ci.yml/badge.svg)](https://github.com/ypollak2/Grandma/actions/workflows/ci.yml)
 
 </div>
@@ -51,9 +52,9 @@ Every time you read a raw LLM response, you pay in attention — or in tokens if
 I inspected the repository and found that the authentication flow now routes through
 the new async session adapter. I updated three files, added one regression test, and
 confirmed that the login path still returns the expected token shape. There is one
-compatibility consideration: the adapter relies on Python 3.9+ typing behavior, so
-Python 3.8 users will need to upgrade or pin the old release. Overall, this should
-reduce request latency, but the deployment notes should mention the runtime floor.
+compatibility consideration: the adapter relies on asyncio.TaskGroup, so Python 3.10+
+is required. Overall, this should reduce request latency by ~70%, but the deployment
+notes should mention the runtime floor bump.
 ```
 
 **After grandma (default mode — ~30 words, ~40 tokens):**
@@ -64,8 +65,8 @@ reduce request latency, but the deployment notes should mention the runtime floo
 📖 Second turn reviewing an auth refactor PR.
 
 What happened: Auth moved to the async session adapter.
-Bottom line:   Faster login path, but Python 3.8 is out.
-Do next:       Document Python ≥3.9 before shipping.
+Bottom line:   Faster login path, but Python ≥3.10 required.
+Do next:       Update deployment docs before shipping.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -77,24 +78,37 @@ Do next:       Document Python ≥3.9 before shipping.
 │ 📖 story arc │ Second turn reviewing an auth refactor PR.   │
 │ 👀 happened  │ Auth moved to async session adapter.         │
 │ 🧶 changed   │ 3 files, 1 regression test added.            │
-│ ✅ positive  │ Login latency reduced; token shape unchanged. │
-│ ⚠️  negative  │ Breaks Python 3.8 (asyncio.TaskGroup).       │
+│ ✅ positive  │ Login latency reduced ~70%; token shape OK.  │
+│ ⚠️  negative  │ Requires Python ≥3.10 (asyncio.TaskGroup).  │
 │ ➖ neutral   │ API surface unchanged.                        │
 │ 💡 net gain  │ Win — ship it with a runtime floor note.     │
-│ 📋 actions   │ - Add Python ≥3.9 to pyproject.toml          │
+│ 📋 actions   │ - Bump requires-python to >=3.10             │
 │              │ - Update deployment docs                      │
 └──────────────┴──────────────────────────────────────────────┘
 ```
 
 ---
 
+## Requirements
+
+- **Python ≥ 3.10**
+- One of: Claude Code subscription (no API key needed) or `ANTHROPIC_API_KEY`
+
+---
+
 ## Install
 
 ```bash
+# pip
 pip install grandma
-# or
+
+# pipx (isolated, recommended for CLI tools)
 pipx install grandma
-# or from source
+
+# uv
+uv tool install grandma
+
+# from source
 pip install git+https://github.com/ypollak2/Grandma.git
 ```
 
@@ -118,7 +132,7 @@ grandma --demo
 grandma --demo --mode deep
 ```
 
-**Environment variable for default mode:**
+**Set a default mode for your shell session:**
 
 ```bash
 export GRANDMA_MODE=deep
@@ -128,7 +142,7 @@ export GRANDMA_MODE=deep
 
 ## The Modes
 
-| Mode | What you get | Model used | Best for |
+| Mode | What you get | Model | Best for |
 |---|---|---|---|
 | `default` | 3-line card: happened / bottom line / do next | Haiku | Most agent output |
 | `deep` | Full impact table with positive/negative/neutral | Sonnet | PRs, arch decisions, refactors |
@@ -156,7 +170,7 @@ Grandma works anywhere LLMs produce text. One-liner install for all detected too
 ./install.sh
 ```
 
-| Tool | Integration type | What happens |
+| Tool | Integration | What happens |
 |---|---|---|
 | **Claude Code** | Stop hook (native) | Auto-card after every long response |
 | **Codex CLI** | Stop hook (native) | Auto-card after every long response |
@@ -170,7 +184,7 @@ Grandma works anywhere LLMs produce text. One-liner install for all detected too
 | **Aider** | `grandma-aider` wrapper | Pipe aider output through grandma |
 | **OpenHands** | `grandma-openhands` wrapper | Pipe headless output through grandma |
 
-**MCP server (for any MCP-capable IDE):**
+**MCP server (any MCP-capable IDE):**
 
 ```bash
 grandma serve
@@ -194,11 +208,23 @@ Add to any `.mcp.json`:
 
 ## How the mascot rotates
 
-Each grandma portrait in this repo (`assets/grandmas/`) was generated with Gemini Image.  
+Each portrait in `assets/grandmas/` was generated with Gemini Image.  
 A [daily GitHub Action](.github/workflows/rotate-grandma.yml) picks one at random and replaces `assets/grandma.png`.  
 The README always shows the current winner. No JS. No CDN. No infrastructure.
 
 Want to add your own grandma? Drop a PNG into `assets/grandmas/` and open a PR.
+
+---
+
+## Contributing
+
+```bash
+git clone https://github.com/ypollak2/Grandma.git
+cd Grandma
+pip install -e ".[dev]"
+pytest tests/        # run tests
+ruff check src       # lint
+```
 
 ---
 
@@ -218,11 +244,14 @@ Grandma reads the last 3 turns of the conversation to understand where you are i
 If you are on turn 8 of debugging the same auth bug, she will tell you. This is the dementia prevention feature.
 
 **Which models does it use?**  
-Default mode: `claude-haiku-4-5-20251001`. Deep mode: `claude-sonnet-4-6`.  
+Default: `claude-haiku-4-5-20251001`. Deep: `claude-sonnet-4-6`.  
 Both run on your Claude Code subscription — no extra key needed.
+
+**Why Python ≥ 3.10?**  
+The `mcp` package (used for `grandma serve`) requires 3.10+.
 
 ---
 
 <div align="center">
-<sub>Made with 💜 by <a href="https://github.com/ypollak2">Yali Pollak</a> · MIT License</sub>
+<sub>Made with 💜 by <a href="https://github.com/ypollak2">Yali Pollak</a> · <a href="https://github.com/ypollak2/Grandma/blob/main/LICENSE">MIT License</a> · <a href="https://pypi.org/project/grandma">PyPI</a></sub>
 </div>
