@@ -6,8 +6,19 @@ from typing import List, Optional, Union
 
 from grandma.models import Mode, Verdict
 
-DEFAULT_MODEL = "claude-haiku-4-5-20251001"
-DEEP_MODEL = "claude-sonnet-4-6"
+# No hardcoded model names — all model selection is driven by env vars.
+# Backends that can run without an explicit model name (e.g. claude_cli lets the
+# CLI decide; anthropic SDK has its own default) are marked "optional" below.
+_BACKEND_MODEL_REQUIRED = {
+    "claude_cli": False,      # --model flag omitted; Claude Code CLI picks the model
+    "anthropic": False,       # SDK has its own default; GRANDMA_MODEL overrides it
+    "openai": True,
+    "openai_compatible": True,
+    "ollama": True,
+    "groq": True,
+    "gemini": True,
+    "custom_command": False,  # model name is meaningless for subprocess backends
+}
 
 # Provider default base URLs for OpenAI-compatible endpoints
 _PROVIDER_BASE_URLS = {
@@ -92,14 +103,30 @@ def _resolve_backend() -> str:
     return "claude_cli"
 
 
-def _resolve_model(mode: Mode) -> str:
+def _resolve_model(mode: Mode) -> Optional[str]:
+    """Return model name from env, or None if not configured."""
     if mode is Mode.DEEP:
-        return (
-            os.getenv("GRANDMA_DEEP_MODEL")
-            or os.getenv("GRANDMA_MODEL")
-            or DEEP_MODEL
+        return os.getenv("GRANDMA_DEEP_MODEL") or os.getenv("GRANDMA_MODEL")
+    return os.getenv("GRANDMA_MODEL")
+
+
+def _require_model(mode: Mode, backend: str) -> str:
+    """Return model name, raising a helpful error if the backend needs one but none is set."""
+    model = _resolve_model(mode)
+    if model:
+        return model
+    if _BACKEND_MODEL_REQUIRED.get(backend, True):
+        env_hint = "GRANDMA_DEEP_MODEL" if mode is Mode.DEEP else "GRANDMA_MODEL"
+        raise RuntimeError(
+            f'No model configured for backend "{backend}".\n\n'
+            f"Set one of:\n"
+            f"  {env_hint}=<model-name>        # for {mode.value} mode\n"
+            f"  GRANDMA_MODEL=<model-name>    # for all modes\n\n"
+            f"Example for Ollama:   GRANDMA_MODEL=llama3.1\n"
+            f"Example for OpenAI:   GRANDMA_MODEL=gpt-4o-mini\n"
+            f"Example for Groq:     GRANDMA_MODEL=llama-3.1-8b-instant"
         )
-    return os.getenv("GRANDMA_MODEL") or DEFAULT_MODEL
+    return ""  # backend doesn't require a model name
 
 
 def _resolve_api_key(backend: str) -> Optional[str]:
@@ -139,7 +166,7 @@ def _extract_via_openai_compat(
     """Call any OpenAI-compatible /v1/chat/completions endpoint via httpx."""
     import httpx
 
-    model = _resolve_model(mode)
+    model = _require_model(mode, backend)
     api_key = _resolve_api_key(backend) or "no-key"
     base_url = _resolve_base_url(backend) or "http://localhost:11434/v1"
     prompt = _build_prompt(text, mode, history)
@@ -166,16 +193,19 @@ def _extract_via_openai_compat(
 
 
 def _extract_via_sdk(text: str, mode: Mode, client, history: Optional[List[str]]) -> str:
-    """Use Anthropic SDK with an API key."""
+    """Use Anthropic SDK. Model is optional — omit if GRANDMA_MODEL is not set."""
     history_block = _build_history_block(history)
     template = _DEFAULT_PROMPT if mode is Mode.DEFAULT else _DEEP_PROMPT
     system = template.format(history_block=history_block).split("The text to summarise:")[0].strip()
-    response = client.messages.create(
-        model=_resolve_model(mode),
-        max_tokens=600 if mode is Mode.DEFAULT else 1400,
-        system=system,
-        messages=[{"role": "user", "content": text}],
-    )
+    kwargs: dict = {
+        "max_tokens": 600 if mode is Mode.DEFAULT else 1400,
+        "system": system,
+        "messages": [{"role": "user", "content": text}],
+    }
+    model = _resolve_model(mode)
+    if model:
+        kwargs["model"] = model
+    response = client.messages.create(**kwargs)
     return response.content[0].text.strip()
 
 
@@ -185,8 +215,12 @@ def _extract_via_claude_code(text: str, mode: Mode, history: Optional[List[str]]
     if not claude:
         raise RuntimeError("claude CLI not found — install Claude Code or set ANTHROPIC_API_KEY / GRANDMA_MODEL_BACKEND")
     prompt = _build_prompt(text, mode, history)
+    cmd = [claude, "-p", "-", "--output-format", "text"]
+    model = _resolve_model(mode)
+    if model:
+        cmd += ["--model", model]
     result = subprocess.run(
-        [claude, "-p", "-", "--output-format", "text"],
+        cmd,
         input=prompt,
         capture_output=True,
         text=True,

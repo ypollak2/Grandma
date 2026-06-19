@@ -1,7 +1,8 @@
 import json
+import os
 from unittest.mock import MagicMock
 
-from grandma.extractor import DEEP_MODEL, DEFAULT_MODEL, extract
+from grandma.extractor import extract
 from grandma.models import Mode, Verdict
 
 
@@ -23,7 +24,7 @@ _SAMPLE_VERDICT = {
         "neutral": "No API surface change",
     },
     "net_gain": "Worth it — ship it",
-    "action_items": ["Pin Python >=3.9 in pyproject.toml"],
+    "action_items": ["Pin Python >=3.10 in pyproject.toml"],
 }
 
 
@@ -35,7 +36,23 @@ def test_extract_returns_verdict():
     assert result.net_gain == "Worth it — ship it"
     assert len(result.action_items) == 1
     client.messages.create.assert_called_once()
-    assert client.messages.create.call_args.kwargs["model"] == DEEP_MODEL
+
+
+def test_extract_respects_grandma_model_env(monkeypatch):
+    """When GRANDMA_MODEL is set, the SDK call must use that model."""
+    monkeypatch.setenv("GRANDMA_MODEL", "my-test-model")
+    client = _mock_client(_SAMPLE_VERDICT)
+    extract("some verbose output", mode=Mode.DEEP, client=client)
+    assert client.messages.create.call_args.kwargs["model"] == "my-test-model"
+
+
+def test_extract_no_model_kwarg_when_unset(monkeypatch):
+    """When GRANDMA_MODEL is unset, the SDK call must not include a model kwarg."""
+    monkeypatch.delenv("GRANDMA_MODEL", raising=False)
+    monkeypatch.delenv("GRANDMA_DEEP_MODEL", raising=False)
+    client = _mock_client(_SAMPLE_VERDICT)
+    extract("some verbose output", mode=Mode.DEEP, client=client)
+    assert "model" not in client.messages.create.call_args.kwargs
 
 
 def test_extract_default_returns_compact_verdict():
@@ -43,7 +60,7 @@ def test_extract_default_returns_compact_verdict():
         {
             "what_happened": "Auth module was refactored to async/await",
             "net_gain": "Worth it",
-            "action_items": ["Document Python >=3.9"],
+            "action_items": ["Document Python >=3.10"],
         }
     )
     result = extract("some verbose output", client=client)
@@ -52,8 +69,7 @@ def test_extract_default_returns_compact_verdict():
     assert result.what_changed == ""
     assert result.impact.positive is None
     assert result.net_gain == "Worth it"
-    assert result.action_items == ["Document Python >=3.9"]
-    assert client.messages.create.call_args.kwargs["model"] == DEFAULT_MODEL
+    assert result.action_items == ["Document Python >=3.10"]
 
 
 def test_extract_off_returns_original_text():
@@ -73,7 +89,6 @@ def test_extract_handles_markdown_fences():
 
 def test_extract_raises_without_api_key_or_cli(monkeypatch):
     """With no API keys and no claude CLI, extract must raise RuntimeError."""
-    # Clear all keys that could trigger a non-cli backend
     for var in (
         "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GROQ_API_KEY",
         "GEMINI_API_KEY", "GOOGLE_API_KEY",
@@ -87,3 +102,17 @@ def test_extract_raises_without_api_key_or_cli(monkeypatch):
         assert False, "should have raised"
     except RuntimeError as e:
         assert "claude CLI not found" in str(e)
+
+
+def test_extract_raises_helpful_error_when_model_missing_for_openai(monkeypatch):
+    """OpenAI backend without GRANDMA_MODEL must raise with a helpful message."""
+    monkeypatch.setenv("GRANDMA_MODEL_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.delenv("GRANDMA_MODEL", raising=False)
+    monkeypatch.delenv("GRANDMA_DEEP_MODEL", raising=False)
+    try:
+        extract("some text")
+        assert False, "should have raised"
+    except RuntimeError as e:
+        assert "No model configured" in str(e)
+        assert "GRANDMA_MODEL" in str(e)
