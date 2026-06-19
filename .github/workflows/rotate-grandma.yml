@@ -1,0 +1,39 @@
+name: Rotate grandma mascot
+
+# Security: this workflow uses no external/untrusted input in run: blocks.
+# CHOSEN is derived only from local repo file listing (RANDOM % COUNT).
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # daily at 06:00 UTC
+  workflow_dispatch:        # allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pick a random grandma image
+        run: |
+          IMAGES=(assets/grandmas/grandma-*.png)
+          COUNT=${#IMAGES[@]}
+          IDX=$(( RANDOM % COUNT ))
+          CHOSEN="${IMAGES[$IDX]}"
+          cp "$CHOSEN" assets/grandma.png
+          echo "Chose: $CHOSEN (index $IDX of $COUNT)"
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/grandma.png
+          if git diff --cached --quiet; then
+            echo "Same image — nothing to commit"
+          else
+            git commit -m "chore: rotate grandma mascot [skip ci]"
+            git push
+          fi

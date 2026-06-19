@@ -1,12 +1,50 @@
+<div align="center">
+
+<!-- Grandma rotates daily via .github/workflows/rotate-grandma.yml -->
+<img src="assets/grandma.png" alt="👵 grandma" width="320" />
+
 # 👵 grandma
 
-> "Explain it like you'd tell grandma."
+**Explain it like you'd tell grandma.**
 
-You know her. She loves you, she read the whole thing, and she is not sitting through six paragraphs of agent confetti to find out whether the test passed. Grandma does not dumb it down. She keeps every fact that matters. She just refuses to waste your afternoon.
+[![PyPI](https://img.shields.io/pypi/v/grandma?color=magenta)](https://pypi.org/project/grandma)
+[![License: MIT](https://img.shields.io/badge/license-MIT-magenta.svg)](LICENSE)
+[![Tests](https://github.com/yalipollak/grandma/actions/workflows/ci.yml/badge.svg)](https://github.com/yalipollak/grandma/actions)
 
-`grandma` takes verbose LLM output and gives you the bottom line.
+</div>
 
-## Before
+---
+
+You know her. She loves you, she read the whole thing, and she is **not** sitting through six paragraphs of agent confetti to find out whether the test passed.
+
+Grandma does not dumb it down. She keeps every fact that matters. She just refuses to waste your afternoon.
+
+`grandma` takes verbose LLM output and distils it to three lines: **what happened**, **the bottom line**, and **what to do next**.
+
+---
+
+## 💸 Token savings
+
+Every time you read a raw LLM response, you pay in attention — or in tokens if you pipe it into another model.
+
+| | Words | Reading tokens | Cost to re-read |
+|---|---|---|---|
+| Raw LLM response | ~400 | ~530 | 100% |
+| **grandma card** | **~40** | **~55** | **~10%** |
+| **Savings** | | | **~90% fewer tokens** |
+
+**Why this matters:**
+
+- In agent loops, every intermediate response fed back into context costs tokens. Grandma compresses the signal.
+- In multi-step workflows (plan → code → review → deploy), each step can save 400–500 tokens of context bloat.
+- Deep mode trades a bit more output for full structured data — still 70–80% smaller than the raw response.
+- Across a 20-turn session, grandma typically saves **8,000–12,000 context tokens**.
+
+---
+
+## Before / After
+
+**Raw LLM output (~90 words, ~120 tokens):**
 
 ```text
 I inspected the repository and found that the authentication flow now routes through
@@ -17,76 +55,173 @@ Python 3.8 users will need to upgrade or pin the old release. Overall, this shou
 reduce request latency, but the deployment notes should mention the runtime floor.
 ```
 
-## After
+**After grandma (default mode — ~30 words, ~40 tokens):**
 
-```text
+```
 👵 grandma
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Second turn reviewing an auth refactor PR.
+
 What happened: Auth moved to the async session adapter.
-Bottom line: Faster login path, but Python 3.8 is out.
-Do next: Document Python >=3.9 before shipping.
+Bottom line:   Faster login path, but Python 3.8 is out.
+Do next:       Document Python ≥3.9 before shipping.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## The Modes
+**After grandma (deep mode — full impact table):**
 
-`--mode default`
+```
+👵 grandma
+┌──────────────┬──────────────────────────────────────────────┐
+│ 📖 story arc │ Second turn reviewing an auth refactor PR.   │
+│ 👀 happened  │ Auth moved to async session adapter.         │
+│ 🧶 changed   │ 3 files, 1 regression test added.            │
+│ ✅ positive  │ Login latency reduced; token shape unchanged. │
+│ ⚠️  negative  │ Breaks Python 3.8 (asyncio.TaskGroup).       │
+│ ➖ neutral   │ API surface unchanged.                        │
+│ 💡 net gain  │ Win — ship it with a runtime floor note.     │
+│ 📋 actions   │ - Add Python ≥3.9 to pyproject.toml          │
+│              │ - Update deployment docs                      │
+└──────────────┴──────────────────────────────────────────────┘
+```
 
-This is the kitchen-table version. Four lines, no ceremony: what happened, the bottom line, and what to do next. Cheap, fast, and enough for most agent output.
-
-`--mode deep`
-
-This is when Grandma puts on the reading glasses. You get the full structured breakdown: what changed, positive impact, negative impact, neutral shifts, net gain, and action items.
-
-`--mode off`
-
-Grandma steps aside. The original text passes through unchanged. Sometimes you really do need the whole casserole.
+---
 
 ## Install
 
 ```bash
-pipx install git+https://github.com/yalipollak/grandma.git
+pip install grandma
+# or
+pipx install grandma
+# or from source
+pip install git+https://github.com/yalipollak/grandma.git
 ```
 
-## Claude Code Hook
+---
 
-Add grandma as a stop hook so Claude Code responses get the stamp before they hit your eyeballs:
+## Usage
+
+**Pipe any text through grandma:**
 
 ```bash
-claude hooks add Stop --command 'grandma --mode "${GRANDMA_MODE:-default}"'
+echo "long agent output..." | grandma
+cat response.txt | grandma --mode deep
+cat response.txt | grandma --json        # raw JSON verdict
+cat response.txt | grandma --mode off    # passthrough
 ```
 
-Set a default mode when you want:
+**Demo (no API key needed):**
+
+```bash
+grandma --demo
+grandma --demo --mode deep
+```
+
+**Environment variable for default mode:**
 
 ```bash
 export GRANDMA_MODE=deep
 ```
 
-## CLI
+---
+
+## The Modes
+
+| Mode | What you get | Model used | Best for |
+|---|---|---|---|
+| `default` | 3-line card: happened / bottom line / do next | Haiku | Most agent output |
+| `deep` | Full impact table with positive/negative/neutral | Sonnet | PRs, arch decisions, refactors |
+| `off` | Passthrough — original text unchanged | — | When you need the whole casserole |
+
+---
+
+## Works without an API key
+
+Grandma runs on your **Claude Code subscription** — no `ANTHROPIC_API_KEY` needed:
+
+```
+grandma → claude -p - (stdin pipe) → your Claude Code OAuth session
+```
+
+Set `ANTHROPIC_API_KEY` only if you want to use your own API credits instead.
+
+---
+
+## IDE & agent integrations
+
+Grandma works anywhere LLMs produce text. One-liner install for all detected tools:
 
 ```bash
-grandma "long agent output goes here"
-cat agent-output.txt | grandma --mode deep
-cat agent-output.txt | grandma --json
-cat agent-output.txt | grandma --mode off
+./install.sh
 ```
+
+| Tool | Integration type | What happens |
+|---|---|---|
+| **Claude Code** | Stop hook (native) | Auto-card after every long response |
+| **Codex CLI** | Stop hook (native) | Auto-card after every long response |
+| **Gemini CLI** | AfterAgent hook (native) | Auto-card after every agent turn |
+| **Cursor** | MCP + `.cursor/rules` | Agent calls `grandma_summarize` after long replies |
+| **Cline** | MCP + rules | Agent calls `grandma_summarize` after tasks |
+| **Continue** | MCP + `/grandma` slash command | On demand or automatic |
+| **Windsurf** | MCP + `.windsurfrules` | Agent calls `grandma_summarize` after long replies |
+| **Zed** | MCP (`context_servers`) | Tool available in Zed AI panel |
+| **Goose** | MCP extension | Tool available in Goose sessions |
+| **Aider** | `grandma-aider` wrapper | Pipe aider output through grandma |
+| **OpenHands** | `grandma-openhands` wrapper | Pipe headless output through grandma |
+
+**MCP server (for any MCP-capable IDE):**
+
+```bash
+grandma serve
+```
+
+Exposes two tools:
+- `grandma_summarize(text, mode, story_context)` → plain-text card
+- `grandma_summarize_json(text, mode, story_context)` → structured dict
+
+Add to any `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "grandma": { "command": "grandma", "args": ["serve"] }
+  }
+}
+```
+
+---
+
+## How the mascot rotates
+
+Each grandma portrait in this repo (`assets/grandmas/`) was generated with Gemini Image.  
+A [daily GitHub Action](.github/workflows/rotate-grandma.yml) picks one at random and replaces `assets/grandma.png`.  
+The README always shows the current winner. No JS. No CDN. No infrastructure.
+
+Want to add your own grandma? Drop a PNG into `assets/grandmas/` and open a PR.
+
+---
 
 ## FAQ
 
-### Does grandma make it dumber?
+**Does grandma make it dumber?**  
+No dear. She keeps the facts. She removes the fog machine.
 
-No dear. Grandma keeps the facts. She removes the fog machine.
+**Does default mode include everything?**  
+It includes what you need first. Use `--mode deep` when you need the full table.
 
-### Does default mode include everything?
+**Why is there an off mode?**  
+Because sometimes you want the original, and grandma knows when to leave a person alone.
 
-It includes what you need first: what happened, whether it matters, and what to do. Use `--mode deep` when you need the full table.
+**What's the `story_so_far` line?**  
+Grandma reads the last 3 turns of the conversation to understand where you are in the arc.  
+If you are on turn 8 of debugging the same auth bug, she will tell you. This is the dementia prevention feature.
 
-### Why is there an off mode?
+**Which models does it use?**  
+Default mode: `claude-haiku-4-5-20251001`. Deep mode: `claude-sonnet-4-6`.  
+Both run on your Claude Code subscription — no extra key needed.
 
-Because sometimes you want the original output, and Grandma knows when to leave a person alone.
+---
 
-### Which models does it use?
-
-Default mode uses `claude-haiku-4-5-20251001`. Deep mode uses `claude-sonnet-4-6`.
-
-### What API key do I need?
-
-Set `ANTHROPIC_API_KEY`. Grandma is direct, not magic.
+<div align="center">
+<sub>Made with 💜 by <a href="https://github.com/ypollak2">Yali Pollak</a> · MIT License</sub>
+</div>
