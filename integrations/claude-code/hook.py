@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Claude Code Stop hook — pipes the last assistant response through grandma."""
+
 import json
 import os
 import subprocess
 import sys
 
-GRANDMA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".venv", "bin", "grandma")
+GRANDMA = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", ".venv", "bin", "grandma"
+)
 MIN_WORDS = 80
 MAX_HISTORY = 3
 
@@ -23,7 +26,11 @@ def collect_messages(transcript_path):
                     if msg.get("role") == "assistant":
                         content = msg.get("content", "")
                         if isinstance(content, list):
-                            parts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+                            parts = [
+                                c.get("text", "")
+                                for c in content
+                                if isinstance(c, dict) and c.get("type") == "text"
+                            ]
                             text = " ".join(parts).strip()
                         else:
                             text = str(content).strip()
@@ -36,7 +43,7 @@ def collect_messages(transcript_path):
     if not messages:
         return "", []
     last = messages[-1]
-    history = list(reversed(messages[-(MAX_HISTORY + 1):-1]))
+    history = list(reversed(messages[-(MAX_HISTORY + 1) : -1]))
     return last, history
 
 

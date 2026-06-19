@@ -1,4 +1,5 @@
 """grandma doctor — checks backend, env vars, model config, and connectivity."""
+
 import os
 import shutil
 from typing import Tuple
@@ -37,8 +38,9 @@ def run() -> None:
             table.add_row("claude CLI", _OK, f"Found at [dim]{claude_path}[/dim]")
         else:
             table.add_row(
-                "claude CLI", _FAIL,
-                "`claude` not in PATH — install Claude Code or set GRANDMA_MODEL_BACKEND"
+                "claude CLI",
+                _FAIL,
+                "`claude` not in PATH — install Claude Code or set GRANDMA_MODEL_BACKEND",
             )
 
     # ── Model config ─────────────────────────────────────────────────────────
@@ -50,8 +52,9 @@ def run() -> None:
     else:
         if backend in ("openai", "openai_compatible", "ollama", "groq", "gemini"):
             table.add_row(
-                "GRANDMA_MODEL", _FAIL,
-                f"Required for backend '{backend}' — set GRANDMA_MODEL=<model-name>"
+                "GRANDMA_MODEL",
+                _FAIL,
+                f"Required for backend '{backend}' — set GRANDMA_MODEL=<model-name>",
             )
         else:
             table.add_row("GRANDMA_MODEL", _WARN, "Not set — backend will use its own default")
@@ -94,6 +97,7 @@ def run() -> None:
         try:
             from grandma.extractor import extract
             from grandma.models import Mode
+
             extract("Respond with only the word OK.", mode=Mode.DEFAULT)
             console.print(f"{_OK} [bold]Backend connectivity:[/bold] live call succeeded")
         except RuntimeError as exc:

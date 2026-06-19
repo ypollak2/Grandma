@@ -1,4 +1,5 @@
 """MCP server — exposes grandma as a tool any MCP-aware IDE can call."""
+
 import re
 from typing import Annotated, Optional
 
@@ -16,6 +17,7 @@ mcp = FastMCP(
 
 def _verdict_to_text(verdict: Verdict, mode: Mode) -> str:
     """Render verdict as plain text (no ANSI) suitable for IDE tool responses."""
+
     def strip_md_bold(s: str) -> str:
         return re.sub(r"\*\*(.+?)\*\*", r"\1", s)
 
@@ -43,8 +45,13 @@ def _verdict_to_text(verdict: Verdict, mode: Mode) -> str:
 @mcp.tool()
 def grandma_summarize(
     text: Annotated[str, Field(description="The verbose LLM output to summarise.")],
-    mode: Annotated[str, Field(description="'default' (compact 3-liner) or 'deep' (full impact table).")] = "default",
-    story_context: Annotated[Optional[str], Field(description="Brief description of the conversation arc so far, if known.")] = None,
+    mode: Annotated[
+        str, Field(description="'default' (compact 3-liner) or 'deep' (full impact table).")
+    ] = "default",
+    story_context: Annotated[
+        Optional[str],
+        Field(description="Brief description of the conversation arc so far, if known."),
+    ] = None,
 ) -> str:
     """
     Summarise verbose LLM output into a compact grandma card.
@@ -63,7 +70,9 @@ def grandma_summarize(
 def grandma_summarize_json(
     text: Annotated[str, Field(description="The verbose LLM output to summarise.")],
     mode: Annotated[str, Field(description="'default' or 'deep'.")] = "default",
-    story_context: Annotated[Optional[str], Field(description="Optional conversation arc context.")] = None,
+    story_context: Annotated[
+        Optional[str], Field(description="Optional conversation arc context.")
+    ] = None,
 ) -> dict:
     """
     Summarise verbose LLM output and return a structured JSON verdict.

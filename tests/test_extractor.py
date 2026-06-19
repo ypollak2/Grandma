@@ -89,10 +89,16 @@ def test_extract_handles_markdown_fences():
 def test_extract_raises_without_api_key_or_cli(monkeypatch):
     """With no API keys and no claude CLI, extract must raise RuntimeError."""
     for var in (
-        "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GROQ_API_KEY",
-        "GEMINI_API_KEY", "GOOGLE_API_KEY",
-        "GRANDMA_API_KEY", "GRANDMA_MODEL", "GRANDMA_BASE_URL",
-        "GRANDMA_MODEL_BACKEND", "GRANDMA_MODEL_COMMAND",
+        "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY",
+        "GROQ_API_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "GRANDMA_API_KEY",
+        "GRANDMA_MODEL",
+        "GRANDMA_BASE_URL",
+        "GRANDMA_MODEL_BACKEND",
+        "GRANDMA_MODEL_COMMAND",
     ):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setattr("grandma.extractor.shutil.which", lambda _: None)

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Gemini CLI AfterAgent hook — fires after each agent turn."""
+
 import json
 import os
 import subprocess
 import sys
 
-GRANDMA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".venv", "bin", "grandma")
+GRANDMA = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", ".venv", "bin", "grandma"
+)
 MIN_WORDS = 80
 
 
@@ -16,14 +19,11 @@ def main():
         sys.exit(0)
 
     # Gemini CLI AfterAgent event shape
-    text = (
-        data.get("agent_response", "")
-        or data.get("response", "")
-        or data.get("content", "")
-    )
+    text = data.get("agent_response", "") or data.get("response", "") or data.get("content", "")
     if isinstance(text, list):
         text = " ".join(
-            part.get("text", "") for part in text
+            part.get("text", "")
+            for part in text
             if isinstance(part, dict) and part.get("type") == "text"
         )
     text = str(text).strip()

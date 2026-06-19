@@ -8,6 +8,7 @@ from rich.console import Console
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass  # python-dotenv is optional; env vars still work without it
@@ -22,7 +23,10 @@ err = Console(stderr=True)
 _DEMO_DEFAULT = Verdict(
     what_happened="**Auth module** refactored from sync to async/await.",
     net_gain="**74% faster** login. Drop Python 3.8 support first.",
-    action_items=["Raise min Python to 3.11 in pyproject.toml", "Update deployment docs before merge"],
+    action_items=[
+        "Raise min Python to 3.11 in pyproject.toml",
+        "Update deployment docs before merge",
+    ],
     story_so_far="We are reviewing a PR that refactors the authentication layer.",
 )
 
@@ -104,6 +108,7 @@ def main(
 def serve() -> None:
     """Start grandma as an MCP server (for Cursor, Cline, Continue, Windsurf, Zed, Goose)."""
     from grandma.mcp_server import serve as _serve
+
     _serve()
 
 
@@ -111,6 +116,7 @@ def serve() -> None:
 def doctor() -> None:
     """Check backend config, API keys, model setup, and connectivity."""
     from grandma.commands.doctor import run
+
     run()
 
 
@@ -122,6 +128,7 @@ def replay(
 ) -> None:
     """Digest the last Claude Code / Codex / aider / Gemini CLI session."""
     from grandma.commands.replay import run
+
     run(n=n, mode_str=mode, verbose=verbose)
 
 

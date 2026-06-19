@@ -1,4 +1,5 @@
 """grandma replay — digest the last AI coding agent session."""
+
 from __future__ import annotations
 
 import json
@@ -11,10 +12,10 @@ console = Console()
 
 # Known session log locations, in priority order
 _LOG_GLOBS = [
-    ("claude",  Path.home() / ".claude" / "projects",    "**/*.jsonl"),
-    ("codex",   Path.home() / ".codex",                   "**/*.jsonl"),
-    ("gemini",  Path.home() / ".gemini" / "logs",         "**/*.log"),
-    ("aider",   Path.cwd(),                               ".aider.chat.history.md"),
+    ("claude", Path.home() / ".claude" / "projects", "**/*.jsonl"),
+    ("codex", Path.home() / ".codex", "**/*.jsonl"),
+    ("gemini", Path.home() / ".gemini" / "logs", "**/*.log"),
+    ("aider", Path.cwd(), ".aider.chat.history.md"),
 ]
 
 
@@ -52,7 +53,8 @@ def _extract_messages_jsonl(path: Path, n: int = 6) -> List[str]:
                 content = obj.get("message", {}).get("content") or obj.get("content") or ""
                 if isinstance(content, list):
                     text = " ".join(
-                        b.get("text", "") for b in content
+                        b.get("text", "")
+                        for b in content
                         if isinstance(b, dict) and b.get("type") == "text"
                     )
                 elif isinstance(content, str):
@@ -92,7 +94,9 @@ def _extract_messages_aider(path: Path, n: int = 6) -> List[str]:
 def _extract_messages_log(path: Path, n: int = 6) -> List[str]:
     """Fallback: return last N non-empty lines of any log file."""
     try:
-        lines = [line.strip() for line in path.read_text(errors="replace").splitlines() if line.strip()]
+        lines = [
+            line.strip() for line in path.read_text(errors="replace").splitlines() if line.strip()
+        ]
         return lines[-n:]
     except OSError:
         return []
@@ -135,6 +139,7 @@ def run(n: int = 6, mode_str: str = "default", verbose: bool = False) -> None:
     with console.status("[bold]Grandma is reading your session…[/bold]", spinner="dots"):
         from grandma.extractor import extract
         from grandma.models import Mode
+
         try:
             mode = Mode(mode_str)
         except ValueError:
@@ -142,4 +147,5 @@ def run(n: int = 6, mode_str: str = "default", verbose: bool = False) -> None:
         result = extract(summary_prompt, mode=mode)
 
     from grandma.card import render
+
     render(result, mode=mode)

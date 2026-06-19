@@ -10,8 +10,8 @@ from grandma.models import Mode, Verdict
 # Backends that can run without an explicit model name (e.g. claude_cli lets the
 # CLI decide; anthropic SDK has its own default) are marked "optional" below.
 _BACKEND_MODEL_REQUIRED = {
-    "claude_cli": False,      # --model flag omitted; Claude Code CLI picks the model
-    "anthropic": False,       # SDK has its own default; GRANDMA_MODEL overrides it
+    "claude_cli": False,  # --model flag omitted; Claude Code CLI picks the model
+    "anthropic": False,  # SDK has its own default; GRANDMA_MODEL overrides it
     "openai": True,
     "openai_compatible": True,
     "ollama": True,
@@ -213,7 +213,9 @@ def _extract_via_claude_code(text: str, mode: Mode, history: Optional[List[str]]
     """Use `claude -p -` (Claude Code subscription) as the LLM backend, via stdin."""
     claude = shutil.which("claude")
     if not claude:
-        raise RuntimeError("claude CLI not found — install Claude Code or set ANTHROPIC_API_KEY / GRANDMA_MODEL_BACKEND")
+        raise RuntimeError(
+            "claude CLI not found — install Claude Code or set ANTHROPIC_API_KEY / GRANDMA_MODEL_BACKEND"
+        )
     prompt = _build_prompt(text, mode, history)
     cmd = [claude, "-p", "-", "--output-format", "text"]
     model = _resolve_model(mode)
@@ -270,6 +272,7 @@ def extract(
         backend = _resolve_backend()
         if backend == "anthropic":
             from anthropic import Anthropic
+
             raw = _extract_via_sdk(text, mode, Anthropic(), history)
         elif backend == "claude_cli":
             raw = _extract_via_claude_code(text, mode, history)

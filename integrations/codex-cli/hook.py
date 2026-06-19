@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Codex CLI Stop hook — same Stop event shape as Claude Code."""
+
 import json
 import os
 import subprocess
 import sys
 
-GRANDMA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".venv", "bin", "grandma")
+GRANDMA = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", ".venv", "bin", "grandma"
+)
 MIN_WORDS = 80
 
 
