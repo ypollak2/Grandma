@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to your project root or merge into existing .mcp.json",
+  "mcpServers": {
+    "grandma": {
+      "command": "grandma",
+      "args": ["serve"],
+      "description": "Grandma — compact bottom-line cards from verbose LLM output"
+    }
+  }
+}

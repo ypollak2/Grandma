@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "grandma": {
+      "command": "grandma",
+      "args": ["serve"]
+    }
+  }
+}

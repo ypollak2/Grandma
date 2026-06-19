@@ -1,0 +1,10 @@
+{
+  "_comment": "Add to ~/.codex/config.json hooks.Stop array",
+  "hooks": {
+    "Stop": [
+      {
+        "command": "python3 /path/to/grandma/integrations/codex-cli/hook.py"
+      }
+    ]
+  }
+}

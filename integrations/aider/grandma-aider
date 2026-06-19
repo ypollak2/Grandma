@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# grandma-aider — wrapper that runs aider and pipes each response through grandma
+# Usage: grandma-aider [aider args...]
+# Example: grandma-aider --model gpt-4o --file src/main.py
+
+GRANDMA=$(command -v grandma)
+if [ -z "$GRANDMA" ]; then
+  echo "grandma not found — install with: pip install grandma" >&2
+  exec aider "$@"
+fi
+
+# Pipe aider stdout through tee (so user sees it live) and grandma (for card)
+aider "$@" 2>&1 | tee /dev/tty | (
+  # Accumulate into temp file, pipe through grandma on exit
+  TMP=$(mktemp)
+  cat > "$TMP"
+  WORDS=$(wc -w < "$TMP")
+  if [ "$WORDS" -gt 80 ]; then
+    cat "$TMP" | "$GRANDMA" 2>/dev/null || true
+  fi
+  rm -f "$TMP"
+)

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# grandma-openhands — run OpenHands headless and pipe output through grandma
+# Usage: grandma-openhands -t "your task"
+
+GRANDMA=$(command -v grandma)
+if [ -z "$GRANDMA" ]; then
+  echo "grandma not found — install with: pip install grandma" >&2
+  exec openhands "$@"
+fi
+
+openhands --headless "$@" 2>&1 | tee /dev/tty | (
+  TMP=$(mktemp)
+  cat > "$TMP"
+  WORDS=$(wc -w < "$TMP")
+  if [ "$WORDS" -gt 80 ]; then
+    cat "$TMP" | "$GRANDMA" 2>/dev/null || true
+  fi
+  rm -f "$TMP"
+)

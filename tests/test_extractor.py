@@ -1,0 +1,82 @@
+import json
+from unittest.mock import MagicMock
+
+from grandma.extractor import DEEP_MODEL, DEFAULT_MODEL, extract
+from grandma.models import Mode, Verdict
+
+
+def _mock_client(response_json: dict):
+    """Build a minimal Anthropic client mock."""
+    msg = MagicMock()
+    msg.content = [MagicMock(text=json.dumps(response_json))]
+    client = MagicMock()
+    client.messages.create.return_value = msg
+    return client
+
+
+_SAMPLE_VERDICT = {
+    "what_happened": "Auth module was refactored to async/await",
+    "what_changed": "3 files modified, 1 test added",
+    "impact": {
+        "positive": "50% faster response time",
+        "negative": "Drops Python 3.8 support",
+        "neutral": "No API surface change",
+    },
+    "net_gain": "Worth it — ship it",
+    "action_items": ["Pin Python >=3.9 in pyproject.toml"],
+}
+
+
+def test_extract_returns_verdict():
+    client = _mock_client(_SAMPLE_VERDICT)
+    result = extract("some verbose output", mode=Mode.DEEP, client=client)
+    assert isinstance(result, Verdict)
+    assert result.what_happened == "Auth module was refactored to async/await"
+    assert result.net_gain == "Worth it — ship it"
+    assert len(result.action_items) == 1
+    client.messages.create.assert_called_once()
+    assert client.messages.create.call_args.kwargs["model"] == DEEP_MODEL
+
+
+def test_extract_default_returns_compact_verdict():
+    client = _mock_client(
+        {
+            "what_happened": "Auth module was refactored to async/await",
+            "net_gain": "Worth it",
+            "action_items": ["Document Python >=3.9"],
+        }
+    )
+    result = extract("some verbose output", client=client)
+    assert isinstance(result, Verdict)
+    assert result.what_happened == "Auth module was refactored to async/await"
+    assert result.what_changed == ""
+    assert result.impact.positive is None
+    assert result.net_gain == "Worth it"
+    assert result.action_items == ["Document Python >=3.9"]
+    assert client.messages.create.call_args.kwargs["model"] == DEFAULT_MODEL
+
+
+def test_extract_off_returns_original_text():
+    text = "leave this alone"
+    assert extract(text, mode=Mode.OFF, client=MagicMock()) == text
+
+
+def test_extract_handles_markdown_fences():
+    raw = "```json\n" + json.dumps(_SAMPLE_VERDICT) + "\n```"
+    msg = MagicMock()
+    msg.content = [MagicMock(text=raw)]
+    client = MagicMock()
+    client.messages.create.return_value = msg
+    result = extract("some text", mode=Mode.DEEP, client=client)
+    assert isinstance(result, Verdict)
+
+
+def test_extract_raises_without_api_key_or_cli(monkeypatch):
+    """Without an API key and without the claude CLI, extract must raise RuntimeError."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr("shutil.which", lambda _: None)
+    try:
+        extract("some text")
+        assert False, "should have raised"
+    except RuntimeError as e:
+        assert "claude CLI not found" in str(e)

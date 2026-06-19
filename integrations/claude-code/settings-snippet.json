@@ -1,0 +1,18 @@
+{
+  "_comment": "Add this Stop hook entry to your ~/.claude/settings.json hooks.Stop array",
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/grandma/integrations/claude-code/hook.py",
+            "timeout": 140,
+            "background": true
+          }
+        ]
+      }
+    ]
+  }
+}

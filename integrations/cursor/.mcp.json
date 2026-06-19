@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "grandma": {
+      "command": "grandma",
+      "args": ["serve"],
+      "description": "Grandma — compact bottom-line cards from verbose LLM output"
+    }
+  }
+}

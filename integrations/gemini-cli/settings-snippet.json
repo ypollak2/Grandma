@@ -1,0 +1,10 @@
+{
+  "_comment": "Add to ~/.gemini/settings.json hooks.AfterAgent array",
+  "hooks": {
+    "AfterAgent": [
+      {
+        "command": "python3 /path/to/grandma/integrations/gemini-cli/hook.py"
+      }
+    ]
+  }
+}

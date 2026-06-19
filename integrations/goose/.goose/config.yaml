@@ -1,0 +1,11 @@
+# grandma MCP integration for Goose
+# Merge into ~/.config/goose/config.yaml or your project .goose/config.yaml
+
+extensions:
+  - name: grandma
+    type: stdio
+    cmd: grandma
+    args:
+      - serve
+    description: "Compact bottom-line cards from verbose LLM output"
+    enabled: true

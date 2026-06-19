@@ -1,0 +1,25 @@
+{
+  "_comment": "Merge into ~/.continue/config.json",
+  "mcpServers": [
+    {
+      "name": "grandma",
+      "command": "grandma",
+      "args": ["serve"]
+    }
+  ],
+  "slashCommands": [
+    {
+      "name": "grandma",
+      "description": "Summarise the last response as a compact grandma card",
+      "step": "CallMCPTool",
+      "params": {
+        "server": "grandma",
+        "tool": "grandma_summarize",
+        "args": {
+          "text": "{{{ LAST_RESPONSE }}}",
+          "mode": "default"
+        }
+      }
+    }
+  ]
+}

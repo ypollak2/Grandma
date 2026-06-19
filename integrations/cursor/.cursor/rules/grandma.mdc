@@ -1,0 +1,17 @@
+---
+description: grandma bottom-line summaries after long responses
+alwaysApply: true
+---
+
+# grandma integration
+
+After writing a long response (> 80 words), call the `grandma_summarize` MCP tool
+to distill it to a compact bottom-line card and show it to the user.
+
+Use `grandma_summarize(text=<your response>, mode="default")` for standard replies.
+Use `grandma_summarize(text=<your response>, mode="deep")` for architectural decisions,
+PR reviews, or multi-file refactors.
+
+If you know the conversation arc (e.g. "3rd turn debugging auth"), pass it as `story_context`.
+
+Never skip the card for tool-heavy, multi-step, or code-heavy responses.

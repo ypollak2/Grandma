@@ -1,0 +1,13 @@
+{
+  "_comment": "Merge into ~/.config/zed/settings.json",
+  "context_servers": {
+    "grandma": {
+      "command": {
+        "path": "grandma",
+        "args": ["serve"],
+        "env": {}
+      },
+      "settings": {}
+    }
+  }
+}

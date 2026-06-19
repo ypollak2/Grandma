@@ -1,0 +1,11 @@
+# grandma integration
+
+After writing any response longer than 80 words, call the `grandma_summarize`
+MCP tool to distill it to a compact card and display it to the user.
+
+- Default mode: `grandma_summarize(text=<response>)`
+- Deep mode for PRs/architecture: `grandma_summarize(text=<response>, mode="deep")`
+- Include `story_context` if tracking a multi-turn task arc.
+
+The card format: What happened / Bottom line / Do next.
+This helps the user instantly grasp the outcome without re-reading your full response.
