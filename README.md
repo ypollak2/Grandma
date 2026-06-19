@@ -150,15 +150,64 @@ export GRANDMA_MODE=deep
 
 ---
 
-## Works without an API key
+## Model backends
 
-Grandma runs on your **Claude Code subscription** — no `ANTHROPIC_API_KEY` needed:
+Grandma auto-detects the best available backend. No configuration needed to get started.
 
+| Priority | Condition | Backend used |
+|---|---|---|
+| 1 | `GRANDMA_MODEL_BACKEND` set | Explicit provider |
+| 2 | `GRANDMA_MODEL` / `GRANDMA_API_KEY` / `GRANDMA_BASE_URL` set | OpenAI-compatible |
+| 3 | `OPENAI_API_KEY` set | OpenAI |
+| 4 | `GROQ_API_KEY` set | Groq |
+| 5 | `GEMINI_API_KEY` / `GOOGLE_API_KEY` set | Gemini |
+| 6 | `ANTHROPIC_API_KEY` set | Anthropic SDK |
+| 7 | _(nothing set)_ | `claude -p -` (Claude Code subscription) |
+
+Copy `.env.example` to `.env` and uncomment what you need:
+
+```bash
+cp .env.example .env
 ```
-grandma → claude -p - (stdin pipe) → your Claude Code OAuth session
+
+**Ollama (local, no key):**
+```env
+GRANDMA_MODEL_BACKEND=ollama
+GRANDMA_MODEL=llama3.1
+GRANDMA_DEEP_MODEL=deepseek-r1
 ```
 
-Set `ANTHROPIC_API_KEY` only if you want to use your own API credits instead.
+**Groq (fast cloud inference):**
+```env
+GRANDMA_MODEL_BACKEND=groq
+GRANDMA_MODEL=llama-3.1-8b-instant
+GRANDMA_DEEP_MODEL=llama-3.3-70b-versatile
+GROQ_API_KEY=gsk_...
+```
+
+**OpenAI:**
+```env
+GRANDMA_MODEL_BACKEND=openai
+GRANDMA_MODEL=gpt-4o-mini
+GRANDMA_DEEP_MODEL=gpt-4.1
+OPENAI_API_KEY=sk-...
+```
+
+**Gemini:**
+```env
+GRANDMA_MODEL_BACKEND=gemini
+GRANDMA_MODEL=gemini-2.5-flash
+GRANDMA_DEEP_MODEL=gemini-2.5-pro
+GEMINI_API_KEY=AIza...
+```
+
+**Any OpenAI-compatible provider:**
+```env
+GRANDMA_MODEL_BACKEND=openai_compatible
+GRANDMA_BASE_URL=https://your-provider.example.com/v1
+GRANDMA_API_KEY=your-key
+GRANDMA_MODEL=your-model-name
+```
 
 ---
 

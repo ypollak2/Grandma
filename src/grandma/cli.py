@@ -6,6 +6,12 @@ from typing import Optional
 import typer
 from rich.console import Console
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv is optional; env vars still work without it
+
 from grandma.card import render
 from grandma.extractor import extract
 from grandma.models import Impact, Mode, Verdict
