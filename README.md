@@ -1,11 +1,11 @@
 <div align="center">
 
 <!-- Mascot rotates daily — see .github/workflows/rotate-grandma.yml -->
-<img src="https://raw.githubusercontent.com/ypollak2/Grandma/main/assets/grandma.png" alt="grandma mascot" width="320" />
+<img src="https://raw.githubusercontent.com/ypollak2/Grandma/main/assets/grandma.png" alt="grandma mascot" width="280" />
 
 # 👵 grandma
 
-**Explain it like you'd tell grandma.**
+**The digest layer for noisy AI agents.**
 
 [![PyPI - Version](https://img.shields.io/pypi/v/grandma)](https://pypi.org/project/grandma)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/grandma)](https://pypi.org/project/grandma)
@@ -17,36 +17,35 @@
 
 ---
 
-You know her. She loves you, she read the whole thing, and she is **not** sitting through six paragraphs of agent confetti to find out whether the test passed.
+Your AI agent just wrote 2,000 words. You need the next step. grandma extracts it.
 
-Grandma does not dumb it down. She keeps every fact that matters. She just refuses to waste your afternoon.
+Pipe any LLM output through grandma and get a clean terminal card: **what happened**, **the bottom line**, **what to do next**. No API key needed if you use Claude Code.
 
-`grandma` takes verbose LLM output and distils it to three lines: **what happened**, **the bottom line**, and **what to do next**.
+```bash
+pipx install grandma
+grandma --demo
+```
 
 ---
 
-## 💸 Token savings
+## Try it in 30 seconds
 
-Every time you read a raw LLM response, you pay in attention — or in tokens if you pipe it into another model.
+```bash
+# zero-config if you have Claude Code installed
+echo "$(cat some-agent-output.txt)" | grandma
 
-| | Words | Reading tokens | Cost to re-read |
-|---|---|---|---|
-| Raw LLM response | ~400 | ~530 | 100% |
-| **grandma card** | **~40** | **~55** | **~10%** |
-| **Savings** | | | **~90% fewer tokens** |
+# local model via Ollama (no cloud key needed)
+GRANDMA_MODEL_BACKEND=ollama GRANDMA_MODEL=llama3.1 grandma --demo
 
-**Why this matters:**
-
-- In agent loops, every intermediate response fed back into context costs tokens. Grandma compresses the signal.
-- In multi-step workflows (plan → code → review → deploy), each step can save 400–500 tokens of context bloat.
-- Deep mode trades a bit more output for full structured data — still 70–80% smaller than the raw response.
-- Across a 20-turn session, grandma typically saves **8,000–12,000 context tokens**.
+# any provider
+GRANDMA_MODEL_BACKEND=openai GRANDMA_MODEL=gpt-4o-mini OPENAI_API_KEY=sk-... grandma --demo
+```
 
 ---
 
 ## Before / After
 
-**Raw LLM output (~90 words, ~120 tokens):**
+**Raw agent output (~90 words, ~120 tokens):**
 
 ```text
 I inspected the repository and found that the authentication flow now routes through
@@ -57,7 +56,7 @@ is required. Overall, this should reduce request latency by ~70%, but the deploy
 notes should mention the runtime floor bump.
 ```
 
-**After grandma (default mode — ~30 words, ~40 tokens):**
+**After grandma (default mode — ~30 words):**
 
 ```
 👵 grandma
@@ -89,72 +88,62 @@ Do next:       Update deployment docs before shipping.
 
 ---
 
-## Requirements
-
-- **Python ≥ 3.10**
-- One of: Claude Code subscription (no API key needed) or `ANTHROPIC_API_KEY`
-
----
-
 ## Install
 
 ```bash
-# pip
-pip install grandma
-
-# pipx (isolated, recommended for CLI tools)
-pipx install grandma
-
-# uv
-uv tool install grandma
-
-# from source
-pip install git+https://github.com/ypollak2/Grandma.git
+pip install grandma        # pip
+pipx install grandma       # isolated (recommended)
+uv tool install grandma    # uv
+pip install git+https://github.com/ypollak2/Grandma.git  # from source
 ```
+
+Requires **Python ≥ 3.10**.
 
 ---
 
 ## Usage
 
-**Pipe any text through grandma:**
-
 ```bash
-echo "long agent output..." | grandma
-cat response.txt | grandma --mode deep
-cat response.txt | grandma --json        # raw JSON verdict
-cat response.txt | grandma --mode off    # passthrough
-```
-
-**Demo (no API key needed):**
-
-```bash
-grandma --demo
+echo "agent output..." | grandma              # default 3-line card
+cat output.txt | grandma --mode deep          # full impact table
+cat output.txt | grandma --json               # raw JSON verdict
+cat output.txt | grandma --mode off           # passthrough (for hooks)
+grandma --demo                                # try it with no input
 grandma --demo --mode deep
-```
-
-**Set a default mode for your shell session:**
-
-```bash
-export GRANDMA_MODE=deep
+export GRANDMA_MODE=deep                      # set default for session
 ```
 
 ---
 
-## The Modes
+## The modes
 
-| Mode | What you get | Model | Best for |
-|---|---|---|---|
-| `default` | 3-line card: happened / bottom line / do next | Haiku | Most agent output |
-| `deep` | Full impact table with positive/negative/neutral | Sonnet | PRs, arch decisions, refactors |
-| `off` | Passthrough — original text unchanged | — | When you need the whole casserole |
+| Mode | Output | Best for |
+|---|---|---|
+| `default` | 3-line card: happened / bottom line / do next | Most agent output |
+| `deep` | Full impact table with positive/negative/neutral | PRs, arch decisions, refactors |
+| `off` | Passthrough — original text unchanged | Hook pass-through control |
 
 ---
 
-## Model backends
+## 💸 Why this matters: token savings
 
-Grandma auto-detects the best available backend. No configuration needed to get started.
+Every intermediate agent response fed into the next prompt costs tokens. Grandma compresses the signal.
 
-| Priority | Condition | Backend used |
+| | Words | Tokens (approx) |
+|---|---|---|
+| Raw LLM response | ~400 | ~530 |
+| **grandma card** | **~40** | **~55** |
+| **Saving** | **~90%** | **~90%** |
+
+Across a 20-turn session: **8,000–12,000 context tokens saved**.
+
+---
+
+## Model backends — bring your own
+
+Grandma auto-detects the best available backend. **No config needed** to get started with Claude Code.
+
+| Priority | When | Backend |
 |---|---|---|
 | 1 | `GRANDMA_MODEL_BACKEND` set | Explicit provider |
 | 2 | `GRANDMA_MODEL` / `GRANDMA_API_KEY` / `GRANDMA_BASE_URL` set | OpenAI-compatible |
@@ -162,9 +151,11 @@ Grandma auto-detects the best available backend. No configuration needed to get 
 | 4 | `GROQ_API_KEY` set | Groq |
 | 5 | `GEMINI_API_KEY` / `GOOGLE_API_KEY` set | Gemini |
 | 6 | `ANTHROPIC_API_KEY` set | Anthropic SDK |
-| 7 | _(nothing set)_ | `claude -p -` (Claude Code subscription) |
+| 7 | _(nothing set)_ | `claude -p -` (Claude Code subscription, no key) |
 
-Copy `.env.example` to `.env` and uncomment what you need:
+**Model names are fully dynamic** — no hardcoded vendor strings in grandma. You choose the model; grandma uses whatever you set. For backends that don't require an explicit model (claude_cli, anthropic SDK), grandma lets the provider pick its own default.
+
+Copy `.env.example` → `.env` and uncomment your provider:
 
 ```bash
 cp .env.example .env
@@ -177,7 +168,7 @@ GRANDMA_MODEL=llama3.1
 GRANDMA_DEEP_MODEL=deepseek-r1
 ```
 
-**Groq (fast cloud inference):**
+**Groq (fast inference):**
 ```env
 GRANDMA_MODEL_BACKEND=groq
 GRANDMA_MODEL=llama-3.1-8b-instant
@@ -201,7 +192,7 @@ GRANDMA_DEEP_MODEL=gemini-2.5-pro
 GEMINI_API_KEY=AIza...
 ```
 
-**Any OpenAI-compatible provider:**
+**Any OpenAI-compatible provider (Together, Fireworks, LM Studio, etc.):**
 ```env
 GRANDMA_MODEL_BACKEND=openai_compatible
 GRANDMA_BASE_URL=https://your-provider.example.com/v1
@@ -209,41 +200,43 @@ GRANDMA_API_KEY=your-key
 GRANDMA_MODEL=your-model-name
 ```
 
+**Custom subprocess (anything that reads stdin):**
+```env
+GRANDMA_MODEL_BACKEND=custom_command
+GRANDMA_MODEL_COMMAND=ollama run llama3.1
+```
+
 ---
 
 ## IDE & agent integrations
 
-Grandma works anywhere LLMs produce text. One-liner install for all detected tools:
+Auto-install all detected tools:
 
 ```bash
 ./install.sh
 ```
 
-| Tool | Integration | What happens |
+| Tool | How | Effect |
 |---|---|---|
-| **Claude Code** | Stop hook (native) | Auto-card after every long response |
-| **Codex CLI** | Stop hook (native) | Auto-card after every long response |
-| **Gemini CLI** | AfterAgent hook (native) | Auto-card after every agent turn |
-| **Cursor** | MCP + `.cursor/rules` | Agent calls `grandma_summarize` after long replies |
+| **Claude Code** | Stop hook | Auto-card after every long response |
+| **Codex CLI** | Stop hook | Auto-card after every long response |
+| **Gemini CLI** | AfterAgent hook | Auto-card after every agent turn |
+| **Cursor** | MCP + rules | Agent calls `grandma_summarize` automatically |
 | **Cline** | MCP + rules | Agent calls `grandma_summarize` after tasks |
-| **Continue** | MCP + `/grandma` slash command | On demand or automatic |
-| **Windsurf** | MCP + `.windsurfrules` | Agent calls `grandma_summarize` after long replies |
-| **Zed** | MCP (`context_servers`) | Tool available in Zed AI panel |
-| **Goose** | MCP extension | Tool available in Goose sessions |
-| **Aider** | `grandma-aider` wrapper | Pipe aider output through grandma |
-| **OpenHands** | `grandma-openhands` wrapper | Pipe headless output through grandma |
+| **Continue** | MCP + slash command | On demand or automatic |
+| **Windsurf** | MCP + rules | Agent calls `grandma_summarize` automatically |
+| **Zed** | MCP (`context_servers`) | Tool in Zed AI panel |
+| **Goose** | MCP extension | Tool in Goose sessions |
+| **Aider** | pipe wrapper | Pipe aider output through grandma |
+| **OpenHands** | pipe wrapper | Pipe headless output through grandma |
 
-**MCP server (any MCP-capable IDE):**
+**MCP server** — works with any MCP-capable IDE:
 
 ```bash
 grandma serve
 ```
 
-Exposes two tools:
-- `grandma_summarize(text, mode, story_context)` → plain-text card
-- `grandma_summarize_json(text, mode, story_context)` → structured dict
-
-Add to any `.mcp.json`:
+Add to `.mcp.json`:
 
 ```json
 {
@@ -253,19 +246,38 @@ Add to any `.mcp.json`:
 }
 ```
 
+Tools exposed: `grandma_summarize(text, mode, story_context)` and `grandma_summarize_json(...)`.
+
+---
+
+## Troubleshooting
+
+**"No model configured for backend X"**
+Set `GRANDMA_MODEL=<model-name>` in your `.env`. See `.env.example` for provider examples.
+
+**"claude CLI not found"**
+Install [Claude Code](https://claude.ai/code) or set a different backend via `GRANDMA_MODEL_BACKEND`.
+
+**Output is not JSON / parsing error**
+The model returned something unexpected. Try `--mode off` to see the raw response, then check your model/backend config.
+
+**Provider returns 401 / 403**
+Check that the right API key env var is set for your backend (e.g. `OPENAI_API_KEY`, `GROQ_API_KEY`).
+
 ---
 
 ## How the mascot rotates
 
-Each portrait in `assets/grandmas/` was generated with Gemini Image.  
-A [daily GitHub Action](.github/workflows/rotate-grandma.yml) picks one at random and replaces `assets/grandma.png`.  
-The README always shows the current winner. No JS. No CDN. No infrastructure.
+Each portrait in `assets/grandmas/` was generated with Gemini Image.
+A [daily GitHub Action](.github/workflows/rotate-grandma.yml) picks one at random and replaces `assets/grandma.png` with a `[skip ci]` commit.
 
 Want to add your own grandma? Drop a PNG into `assets/grandmas/` and open a PR.
 
 ---
 
 ## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full details. Quick start:
 
 ```bash
 git clone https://github.com/ypollak2/Grandma.git
@@ -275,29 +287,35 @@ pytest tests/        # run tests
 ruff check src       # lint
 ```
 
+Good first issues are tagged [`good first issue`](https://github.com/ypollak2/Grandma/labels/good%20first%20issue).
+
 ---
 
 ## FAQ
 
-**Does grandma make it dumber?**  
+**Does grandma make it dumber?**
 No dear. She keeps the facts. She removes the fog machine.
 
-**Does default mode include everything?**  
-It includes what you need first. Use `--mode deep` when you need the full table.
+**What model does it use?**
+Whatever you configure via `GRANDMA_MODEL`. There are no hardcoded model names. If you set nothing, `claude_cli` lets Claude Code pick, and `anthropic` lets the SDK pick its default. API-based backends (openai, groq, ollama, gemini) require `GRANDMA_MODEL` to be set.
 
-**Why is there an off mode?**  
-Because sometimes you want the original, and grandma knows when to leave a person alone.
+**Why is there an off mode?**
+Because hooks need a clean passthrough option. When `GRANDMA_MODE=off`, grandma becomes transparent — useful for temporarily disabling the Stop hook without unregistering it.
 
-**What's the `story_so_far` line?**  
-Grandma reads the last 3 turns of the conversation to understand where you are in the arc.  
-If you are on turn 8 of debugging the same auth bug, she will tell you. This is the dementia prevention feature.
+**What's the `story_so_far` line?**
+Grandma reads the last 3 turns of the conversation to track where you are in the arc. Turn 8 of the same auth bug? She'll say so. This is the dementia prevention feature.
 
-**Which models does it use?**  
-Default: `claude-haiku-4-5-20251001`. Deep: `claude-sonnet-4-6`.  
-Both run on your Claude Code subscription — no extra key needed.
-
-**Why Python ≥ 3.10?**  
+**Why Python ≥ 3.10?**
 The `mcp` package (used for `grandma serve`) requires 3.10+.
+
+**How is this different from llm / fabric / shell_gpt?**
+`llm` gives you model access. `fabric` gives you prompt patterns. `shell_gpt` gives you a REPL. grandma does none of those things. It sits at the *output* end — it is the digest layer you add after any of those tools to stop reading 2,000-word agent responses.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
