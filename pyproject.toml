@@ -32,9 +32,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yalipollak/grandma"
-Repository = "https://github.com/yalipollak/grandma"
-"Bug Tracker" = "https://github.com/yalipollak/grandma/issues"
+Homepage = "https://github.com/ypollak2/Grandma"
+Repository = "https://github.com/ypollak2/Grandma"
+"Bug Tracker" = "https://github.com/ypollak2/Grandma/issues"
 
 [project.scripts]
 grandma = "grandma.cli:app"

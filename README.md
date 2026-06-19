@@ -7,9 +7,10 @@
 
 **Explain it like you'd tell grandma.**
 
-[![PyPI](https://img.shields.io/pypi/v/grandma?color=magenta)](https://pypi.org/project/grandma)
-[![License: MIT](https://img.shields.io/badge/license-MIT-magenta.svg)](LICENSE)
-[![Tests](https://github.com/yalipollak/grandma/actions/workflows/ci.yml/badge.svg)](https://github.com/yalipollak/grandma/actions)
+[![PyPI - Version](https://img.shields.io/pypi/v/grandma.svg)](https://pypi.org/project/grandma)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/grandma.svg)](https://pypi.org/project/grandma)
+[![License: MIT](https://img.shields.io/github/license/ypollak2/Grandma.svg)](https://github.com/ypollak2/Grandma/blob/main/LICENSE)
+[![CI](https://github.com/ypollak2/Grandma/actions/workflows/ci.yml/badge.svg)](https://github.com/ypollak2/Grandma/actions/workflows/ci.yml)
 
 </div>
 
@@ -94,7 +95,7 @@ pip install grandma
 # or
 pipx install grandma
 # or from source
-pip install git+https://github.com/yalipollak/grandma.git
+pip install git+https://github.com/ypollak2/Grandma.git
 ```
 
 ---
