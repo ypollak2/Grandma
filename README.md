@@ -9,7 +9,7 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/grandma)](https://pypi.org/project/grandma)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/grandma)](https://pypi.org/project/grandma)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/grandma)](https://pypi.org/project/grandma)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/grandma?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/grandma)
 [![License: MIT](https://img.shields.io/github/license/ypollak2/Grandma)](https://github.com/ypollak2/Grandma/blob/main/LICENSE)
 [![CI](https://github.com/ypollak2/Grandma/actions/workflows/ci.yml/badge.svg)](https://github.com/ypollak2/Grandma/actions/workflows/ci.yml)
 
