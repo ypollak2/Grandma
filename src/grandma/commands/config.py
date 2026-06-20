@@ -15,6 +15,7 @@ _KNOWN_KEYS = {
     "base_url": "GRANDMA_BASE_URL",
     "mode": "GRANDMA_MODE",
     "theme": "GRANDMA_THEME",
+    "spinner": "GRANDMA_SPINNER",
 }
 
 

@@ -146,7 +146,9 @@ def run(
         f"Session digest from {tool} ({path.name}, last {len(messages)} turns):\n\n{combined}"
     )
 
-    with console.status("[bold]Grandma is reading your session…[/bold]", spinner="dots"):
+    from grandma._spinners import get_spinner
+
+    with console.status("[bold]Grandma is reading your session…[/bold]", spinner=get_spinner()):
         from grandma.extractor import extract
         from grandma.models import Mode
 

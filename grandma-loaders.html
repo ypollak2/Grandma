@@ -1,0 +1,448 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>grandma · 20 loaders</title>
+<style>
+  :root{
+    --ink:#111;
+    --paper:#ffffff;
+    --mute:#9a9a9a;
+    --hair:#ececec;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font:14px/1.4 ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:48px 40px 80px;
+  }
+  header{max-width:980px;margin:0 auto 36px;}
+  header h1{font-size:22px;font-weight:600;margin:0 0 6px;letter-spacing:-0.01em}
+  header p{margin:0;color:var(--mute);max-width:60ch}
+
+  .grid{
+    max-width:980px;margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:14px;
+  }
+  .cell{
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .stage{
+    width:200px;height:200px;
+    display:grid;place-items:center;
+    border:1px solid var(--hair);
+    border-radius:14px;
+    overflow:hidden;
+    background:var(--paper);
+  }
+  .cap{
+    margin-top:8px;font-size:11px;color:var(--mute);
+    letter-spacing:0.02em;text-align:center;
+  }
+  .cap b{color:#6a6a6a;font-weight:600}
+  svg{display:block}
+
+  /* ---------- shared motion ---------- */
+  @keyframes breathe{0%,100%{transform:scale(.82)}50%{transform:scale(1.06)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinr{to{transform:rotate(-360deg)}}
+
+  /* ---------- 1 · breathing blob (calm) ---------- */
+  .l1 .b{
+    width:90px;height:90px;background:var(--ink);
+    border-radius:42% 58% 63% 37% / 41% 44% 56% 59%;
+    animation:l1morph 5s ease-in-out infinite, breathe 5s ease-in-out infinite;
+  }
+  @keyframes l1morph{
+    0%,100%{border-radius:42% 58% 63% 37% / 41% 44% 56% 59%}
+    50%{border-radius:58% 42% 37% 63% / 56% 56% 44% 44%}
+  }
+
+  /* ---------- 2 · knitting yarn ball ---------- */
+  .l2 .ball{animation:spin 6s linear infinite;transform-origin:50% 50%}
+
+  /* ---------- 3 · simmering pot (gooey bubbles) ---------- */
+  .l3 .field{filter:url(#goo3)}
+  .l3 .bub{fill:var(--ink)}
+  @keyframes rise{
+    0%{transform:translateY(34px) scale(.5);opacity:0}
+    20%{opacity:1}
+    80%{opacity:1}
+    100%{transform:translateY(-40px) scale(1);opacity:0}
+  }
+  .l3 .b1{animation:rise 3.2s ease-in infinite}
+  .l3 .b2{animation:rise 3.2s ease-in infinite .9s}
+  .l3 .b3{animation:rise 3.2s ease-in infinite 1.7s}
+  .l3 .b4{animation:rise 3.2s ease-in infinite 2.4s}
+
+  /* ---------- 4 · kneading dough (squish) ---------- */
+  .l4 .d{
+    width:96px;height:96px;background:var(--ink);border-radius:46%;
+    animation:knead 1.8s cubic-bezier(.5,0,.5,1) infinite;
+  }
+  @keyframes knead{
+    0%,100%{transform:scaleX(1) scaleY(1)}
+    30%{transform:scaleX(1.18) scaleY(.78)}
+    60%{transform:scaleX(.82) scaleY(1.18)}
+  }
+
+  /* ---------- 5 · rising bread (slow swell) ---------- */
+  .l5 .loaf{
+    width:120px;height:60px;background:var(--ink);
+    border-radius:60px 60px 18px 18px;
+    transform-origin:50% 100%;
+    animation:proof 4s ease-in-out infinite;
+  }
+  @keyframes proof{
+    0%,100%{transform:scaleY(.62);border-radius:50px 50px 16px 16px}
+    50%{transform:scaleY(1);border-radius:70px 70px 20px 20px}
+  }
+
+  /* ---------- 6 · rocking chair ---------- */
+  .l6 svg{animation:rock 2.6s ease-in-out infinite;transform-origin:50% 78%}
+  @keyframes rock{0%,100%{transform:rotate(-11deg)}50%{transform:rotate(11deg)}}
+
+  /* ---------- 7 · tea drop diffusing ---------- */
+  .l7 .ring{transform-origin:50% 50%;animation:diffuse 2.8s ease-out infinite}
+  .l7 .r2{animation-delay:.9s}
+  .l7 .r3{animation-delay:1.8s}
+  @keyframes diffuse{
+    0%{transform:scale(.1);opacity:.9}
+    100%{transform:scale(1);opacity:0}
+  }
+
+  /* ---------- 8 · two blobs merging (metaball) ---------- */
+  .l8 .field{filter:url(#goo8)}
+  .l8 circle{fill:var(--ink)}
+  .l8 .m1{animation:merge 3s ease-in-out infinite}
+  .l8 .m2{animation:merge 3s ease-in-out infinite reverse}
+  @keyframes merge{
+    0%,100%{transform:translateX(-30px)}
+    50%{transform:translateX(0)}
+  }
+
+  /* ---------- 9 · slow heartbeat ---------- */
+  .l9 .h{
+    width:84px;height:84px;background:var(--ink);
+    border-radius:44% 56% 52% 48% / 48% 42% 58% 52%;
+    animation:beat 2.4s ease-out infinite;
+  }
+  @keyframes beat{
+    0%{transform:scale(.86)}
+    12%{transform:scale(1.05)}
+    24%{transform:scale(.92)}
+    36%{transform:scale(1.0)}
+    50%,100%{transform:scale(.86)}
+  }
+
+  /* ---------- 10 · wandering meander (patience) ---------- */
+  .l10 .dot{
+    fill:var(--ink);
+    animation:wander 4s ease-in-out infinite;
+  }
+  @keyframes wander{
+    0%{transform:translate(0,0)}
+    25%{transform:translate(54px,40px)}
+    50%{transform:translate(0,80px)}
+    75%{transform:translate(-54px,40px)}
+    100%{transform:translate(0,0)}
+  }
+
+  /* ---------- 11 · settling sediment ---------- */
+  .l11 .grain{fill:var(--ink)}
+  @keyframes settle{
+    0%{transform:translateY(-46px);opacity:0}
+    20%{opacity:1}
+    100%{transform:translateY(0);opacity:1}
+  }
+  .l11 .g1{animation:settle 2.6s ease-in infinite}
+  .l11 .g2{animation:settle 2.6s ease-in infinite .4s}
+  .l11 .g3{animation:settle 2.6s ease-in infinite .8s}
+  .l11 .g4{animation:settle 2.6s ease-in infinite 1.2s}
+  .l11 .g5{animation:settle 2.6s ease-in infinite 1.6s}
+
+  /* ---------- 12 · companionship (orbit) ---------- */
+  .l12 .orbit{transform-origin:50% 50%;animation:spin 4.5s linear infinite}
+  .l12 .big{fill:var(--ink)}
+  .l12 .small{fill:var(--ink)}
+
+  /* ---------- 13 · wobbling jello ---------- */
+  .l13 .j{
+    width:94px;height:94px;background:var(--ink);
+    border-radius:30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation:jello 2.2s ease-in-out infinite;
+  }
+  @keyframes jello{
+    0%,100%{border-radius:30% 70% 70% 30% / 30% 30% 70% 70%;transform:rotate(0)}
+    33%{border-radius:70% 30% 40% 60% / 60% 50% 50% 40%;transform:rotate(8deg)}
+    66%{border-radius:40% 60% 60% 40% / 50% 60% 40% 50%;transform:rotate(-8deg)}
+  }
+
+  /* ---------- 14 · condensing the fog (many → one) ---------- */
+  .l14 .field{filter:url(#goo14)}
+  .l14 circle{fill:var(--ink)}
+  @keyframes gather{
+    0%{transform:translate(var(--x),var(--y)) scale(.7);opacity:.5}
+    45%{transform:translate(0,0) scale(1);opacity:1}
+    70%{transform:translate(0,0) scale(1);opacity:1}
+    100%{transform:translate(var(--x),var(--y)) scale(.7);opacity:.5}
+  }
+  .l14 .core{fill:var(--ink)}
+
+  /* ---------- 15 · quilt patch morph ---------- */
+  .l15 .p{fill:var(--ink);transform-origin:center;animation:patch 3s ease-in-out infinite}
+  .l15 .pa{animation-delay:0s}
+  .l15 .pb{animation-delay:.4s}
+  .l15 .pc{animation-delay:.8s}
+  .l15 .pd{animation-delay:1.2s}
+  @keyframes patch{
+    0%,100%{transform:scale(.5);opacity:.25}
+    50%{transform:scale(1);opacity:1}
+  }
+
+  /* ---------- 16 · ripple in a bowl ---------- */
+  .l16 .w{stroke:var(--ink);fill:none;stroke-width:3;transform-origin:50% 50%;animation:diffuse 3s ease-out infinite}
+  .l16 .w2{animation-delay:1s}
+  .l16 .w3{animation-delay:2s}
+
+  /* ---------- 17 · melting drip ---------- */
+  .l17 .field{filter:url(#goo17)}
+  .l17 .src{fill:var(--ink)}
+  .l17 .drop{fill:var(--ink);animation:drip 2.6s ease-in infinite}
+  @keyframes drip{
+    0%{transform:translateY(0) scale(.4);opacity:0}
+    25%{transform:translateY(0) scale(1);opacity:1}
+    100%{transform:translateY(70px) scale(.7);opacity:0}
+  }
+
+  /* ---------- 18 · amoeba crawl ---------- */
+  .l18 .a{
+    width:96px;height:96px;background:var(--ink);
+    animation:crawlmorph 3.2s ease-in-out infinite, crawlmove 3.2s ease-in-out infinite;
+  }
+  @keyframes crawlmorph{
+    0%,100%{border-radius:60% 40% 55% 45% / 45% 55% 45% 55%}
+    50%{border-radius:40% 60% 45% 55% / 55% 45% 60% 40%}
+  }
+  @keyframes crawlmove{
+    0%,100%{transform:translate(-18px,0) scaleX(1)}
+    50%{transform:translate(18px,0) scaleX(1.12)}
+  }
+
+  /* ---------- 19 · winding spiral ---------- */
+  .l19 svg{animation:spinr 3.4s ease-in-out infinite}
+  .l19 .s{stroke:var(--ink);fill:none;stroke-width:7;stroke-linecap:round;
+    stroke-dasharray:300;stroke-dashoffset:300;animation:wind 3.4s ease-in-out infinite}
+  @keyframes wind{
+    0%{stroke-dashoffset:300}
+    50%{stroke-dashoffset:40}
+    100%{stroke-dashoffset:300}
+  }
+
+  /* ---------- 20 · drifting blobs (three, gooey) ---------- */
+  .l20 .field{filter:url(#goo20)}
+  .l20 circle{fill:var(--ink)}
+  .l20 .d1{animation:drift 4s ease-in-out infinite}
+  .l20 .d2{animation:drift 4s ease-in-out infinite -1.3s}
+  .l20 .d3{animation:drift 4s ease-in-out infinite -2.6s}
+  @keyframes drift{
+    0%,100%{transform:translate(0,0)}
+    33%{transform:translate(22px,-16px)}
+    66%{transform:translate(-18px,18px)}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important;animation-iteration-count:1 !important}
+  }
+</style>
+
+<!-- shared SVG filters (gooey) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="goo3"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter>
+    <filter id="goo8"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/></filter>
+    <filter id="goo14"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter>
+    <filter id="goo17"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/></filter>
+    <filter id="goo20"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/></filter>
+  </defs>
+</svg>
+
+<header>
+  <h1>grandma · twenty loaders</h1>
+  <p>Indeterminate loading indicators, 200×200, black &amp; white, no text. Soft and blobby — patient, warm, and quietly digesting the noise into something calm.</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1 -->
+  <div class="cell"><div class="stage l1"><div class="b"></div></div>
+    <div class="cap"><b>breath</b> · calm</div></div>
+
+  <!-- 2 -->
+  <div class="cell"><div class="stage l2">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <g class="ball">
+        <circle cx="60" cy="60" r="46" fill="#111"/>
+        <g stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round">
+          <ellipse cx="60" cy="60" rx="46" ry="20"/>
+          <ellipse cx="60" cy="60" rx="20" ry="46"/>
+          <ellipse cx="60" cy="60" rx="40" ry="40"/>
+          <path d="M24 44 Q60 70 96 44"/>
+          <path d="M24 76 Q60 50 96 76"/>
+        </g>
+      </g>
+    </svg></div>
+    <div class="cap"><b>yarn</b> · knitting</div></div>
+
+  <!-- 3 -->
+  <div class="cell"><div class="stage l3">
+    <svg width="120" height="120" viewBox="0 0 120 120"><g class="field">
+      <circle class="bub b1" cx="46" cy="80" r="11"/>
+      <circle class="bub b2" cx="66" cy="80" r="9"/>
+      <circle class="bub b3" cx="54" cy="80" r="13"/>
+      <circle class="bub b4" cx="72" cy="80" r="8"/>
+    </g></svg></div>
+    <div class="cap"><b>simmer</b> · soup on the stove</div></div>
+
+  <!-- 4 -->
+  <div class="cell"><div class="stage l4"><div class="d"></div></div>
+    <div class="cap"><b>knead</b> · making dough</div></div>
+
+  <!-- 5 -->
+  <div class="cell"><div class="stage l5"><div class="loaf"></div></div>
+    <div class="cap"><b>proof</b> · bread rising</div></div>
+
+  <!-- 6 -->
+  <div class="cell"><div class="stage l6">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <g fill="#111">
+        <rect x="40" y="30" width="10" height="56" rx="5"/>
+        <path d="M40 34 q22 -10 40 4 l0 10 q-20 -12 -40 -2 z"/>
+        <rect x="40" y="78" width="44" height="9" rx="4"/>
+        <path d="M30 92 q30 14 60 0" stroke="#111" stroke-width="9" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg></div>
+    <div class="cap"><b>rock</b> · the rocking chair</div></div>
+
+  <!-- 7 -->
+  <div class="cell"><div class="stage l7">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <circle class="ring r1" cx="60" cy="60" r="48" fill="none" stroke="#111" stroke-width="6"/>
+      <circle class="ring r2" cx="60" cy="60" r="48" fill="none" stroke="#111" stroke-width="6"/>
+      <circle class="ring r3" cx="60" cy="60" r="48" fill="none" stroke="#111" stroke-width="6"/>
+      <circle cx="60" cy="60" r="7" fill="#111"/>
+    </svg></div>
+    <div class="cap"><b>steep</b> · tea diffusing</div></div>
+
+  <!-- 8 -->
+  <div class="cell"><div class="stage l8">
+    <svg width="160" height="120" viewBox="0 0 160 120"><g class="field" transform="translate(80,60)">
+      <circle class="m1" r="22"/>
+      <circle class="m2" r="22"/>
+    </g></svg></div>
+    <div class="cap"><b>merge</b> · two becoming one</div></div>
+
+  <!-- 9 -->
+  <div class="cell"><div class="stage l9"><div class="h"></div></div>
+    <div class="cap"><b>heartbeat</b> · she's here</div></div>
+
+  <!-- 10 -->
+  <div class="cell"><div class="stage l10">
+    <svg width="140" height="140" viewBox="0 0 140 140">
+      <circle class="dot" cx="43" cy="30" r="14"/>
+    </svg></div>
+    <div class="cap"><b>wander</b> · patience</div></div>
+
+  <!-- 11 -->
+  <div class="cell"><div class="stage l11">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <g transform="translate(0,40)">
+        <circle class="grain g1" cx="50" cy="34" r="9"/>
+        <circle class="grain g2" cx="66" cy="40" r="8"/>
+        <circle class="grain g3" cx="58" cy="30" r="10"/>
+        <circle class="grain g4" cx="44" cy="42" r="7"/>
+        <circle class="grain g5" cx="72" cy="34" r="9"/>
+      </g>
+    </svg></div>
+    <div class="cap"><b>settle</b> · letting it rest</div></div>
+
+  <!-- 12 -->
+  <div class="cell"><div class="stage l12">
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <circle class="big" cx="65" cy="65" r="20"/>
+      <g class="orbit">
+        <circle class="small" cx="65" cy="22" r="9"/>
+      </g>
+    </svg></div>
+    <div class="cap"><b>orbit</b> · company</div></div>
+
+  <!-- 13 -->
+  <div class="cell"><div class="stage l13"><div class="j"></div></div>
+    <div class="cap"><b>wobble</b> · the jelly mould</div></div>
+
+  <!-- 14 -->
+  <div class="cell"><div class="stage l14">
+    <svg width="140" height="140" viewBox="0 0 140 140"><g class="field" transform="translate(70,70)">
+      <circle class="core" r="16"/>
+      <circle r="10" style="--x:-44px;--y:-30px;animation:gather 3.4s ease-in-out infinite"/>
+      <circle r="9"  style="--x:42px;--y:-34px;animation:gather 3.4s ease-in-out infinite .3s"/>
+      <circle r="11" style="--x:48px;--y:24px;animation:gather 3.4s ease-in-out infinite .6s"/>
+      <circle r="8"  style="--x:-40px;--y:36px;animation:gather 3.4s ease-in-out infinite .9s"/>
+      <circle r="9"  style="--x:0px;--y:-50px;animation:gather 3.4s ease-in-out infinite 1.2s"/>
+    </g></svg></div>
+    <div class="cap"><b>digest</b> · noise into one card</div></div>
+
+  <!-- 15 -->
+  <div class="cell"><div class="stage l15">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <rect class="p pa" x="24" y="24" width="34" height="34" rx="9"/>
+      <rect class="p pb" x="62" y="24" width="34" height="34" rx="9"/>
+      <rect class="p pc" x="24" y="62" width="34" height="34" rx="9"/>
+      <rect class="p pd" x="62" y="62" width="34" height="34" rx="9"/>
+    </svg></div>
+    <div class="cap"><b>quilt</b> · patch by patch</div></div>
+
+  <!-- 16 -->
+  <div class="cell"><div class="stage l16">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <circle class="w w1" cx="60" cy="60" r="46"/>
+      <circle class="w w2" cx="60" cy="60" r="46"/>
+      <circle class="w w3" cx="60" cy="60" r="46"/>
+      <circle cx="60" cy="60" r="6" fill="#111"/>
+    </svg></div>
+    <div class="cap"><b>ripple</b> · a drop in the bowl</div></div>
+
+  <!-- 17 -->
+  <div class="cell"><div class="stage l17">
+    <svg width="120" height="140" viewBox="0 0 120 140"><g class="field">
+      <ellipse class="src" cx="60" cy="44" rx="30" ry="22"/>
+      <circle class="drop" cx="60" cy="58" r="12"/>
+      <circle class="drop" cx="60" cy="58" r="10" style="animation-delay:1.3s"/>
+    </g></svg></div>
+    <div class="cap"><b>drip</b> · honey off the spoon</div></div>
+
+  <!-- 18 -->
+  <div class="cell"><div class="stage l18"><div class="a"></div></div>
+    <div class="cap"><b>crawl</b> · slow and sure</div></div>
+
+  <!-- 19 -->
+  <div class="cell"><div class="stage l19">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <path class="s" d="M60 60 m0 0
+        a6 6 0 1 1 8 5 a14 14 0 1 1 -20 -10 a24 24 0 1 1 34 18 a34 34 0 1 1 -46 -26"/>
+    </svg></div>
+    <div class="cap"><b>wind</b> · winding the wool</div></div>
+
+  <!-- 20 -->
+  <div class="cell"><div class="stage l20">
+    <svg width="140" height="140" viewBox="0 0 140 140"><g class="field">
+      <circle class="d1" cx="58" cy="62" r="20"/>
+      <circle class="d2" cx="82" cy="70" r="17"/>
+      <circle class="d3" cx="70" cy="80" r="15"/>
+    </g></svg></div>
+    <div class="cap"><b>drift</b> · clouds passing</div></div>
+
+</div>

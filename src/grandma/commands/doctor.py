@@ -111,7 +111,9 @@ def run(json_out: bool = False) -> None:
     console.print()
 
     # ── Live connectivity test ────────────────────────────────────────────────
-    with console.status("[bold]Testing backend connectivity…[/bold]", spinner="dots"):
+    from grandma._spinners import get_spinner
+
+    with console.status("[bold]Testing backend connectivity…[/bold]", spinner=get_spinner()):
         try:
             from grandma.extractor import extract
             from grandma.models import Mode
