@@ -1,8 +1,9 @@
 """grandma doctor — checks backend, env vars, model config, and connectivity."""
 
+import json
 import os
 import shutil
-from typing import Tuple
+from typing import Any, Tuple
 
 from rich.console import Console
 from rich.table import Table
@@ -15,31 +16,33 @@ _OK = "[bold green]✅[/bold green]"
 _WARN = "[bold yellow]⚠️ [/bold yellow]"
 _FAIL = "[bold red]❌[/bold red]"
 
+_STATUS_TEXT = {_OK: "ok", _WARN: "warn", _FAIL: "fail"}
+
 
 def _row(status: str, check: str, detail: str) -> Tuple[str, str, str]:
     return status, check, detail
 
 
-def run() -> None:
-    """Run all diagnostic checks and print a Rich table."""
+def run(json_out: bool = False) -> None:
+    """Run all diagnostic checks and print a Rich table (or JSON with --json)."""
     backend = _resolve_backend()
-    table = Table(title="👵 grandma doctor", show_lines=False, expand=False)
-    table.add_column("Check", style="bold", min_width=24)
-    table.add_column("Status", justify="center", min_width=4)
-    table.add_column("Detail", min_width=48)
+    rows: list[dict[str, Any]] = []
+
+    def add(status: str, check: str, detail: str) -> None:
+        rows.append({"check": check, "status": _STATUS_TEXT.get(status, status), "detail": detail})
 
     # ── Backend ──────────────────────────────────────────────────────────────
-    table.add_row("Active backend", _OK, f"[cyan]{backend}[/cyan]")
+    add(_OK, "Active backend", backend)
 
     # ── claude CLI ───────────────────────────────────────────────────────────
     claude_path = shutil.which("claude")
     if backend == "claude_cli":
         if claude_path:
-            table.add_row("claude CLI", _OK, f"Found at [dim]{claude_path}[/dim]")
+            add(_OK, "claude CLI", f"Found at {claude_path}")
         else:
-            table.add_row(
-                "claude CLI",
+            add(
                 _FAIL,
+                "claude CLI",
                 "`claude` not in PATH — install Claude Code or set GRANDMA_MODEL_BACKEND",
             )
 
@@ -48,19 +51,19 @@ def run() -> None:
     deep_model = _resolve_model(__import__("grandma.models", fromlist=["Mode"]).Mode.DEEP)
 
     if model:
-        table.add_row("GRANDMA_MODEL", _OK, f"[cyan]{model}[/cyan]")
+        add(_OK, "GRANDMA_MODEL", model)
     else:
         if backend in ("openai", "openai_compatible", "ollama", "groq", "gemini"):
-            table.add_row(
-                "GRANDMA_MODEL",
+            add(
                 _FAIL,
+                "GRANDMA_MODEL",
                 f"Required for backend '{backend}' — set GRANDMA_MODEL=<model-name>",
             )
         else:
-            table.add_row("GRANDMA_MODEL", _WARN, "Not set — backend will use its own default")
+            add(_WARN, "GRANDMA_MODEL", "Not set — backend will use its own default")
 
     if deep_model and deep_model != model:
-        table.add_row("GRANDMA_DEEP_MODEL", _OK, f"[cyan]{deep_model}[/cyan]")
+        add(_OK, "GRANDMA_DEEP_MODEL", deep_model)
 
     # ── API keys ─────────────────────────────────────────────────────────────
     key_checks = [
@@ -76,23 +79,38 @@ def run() -> None:
         val = os.getenv(var)
         if val:
             masked = val[:6] + "..." + val[-3:] if len(val) > 12 else "***"
-            table.add_row(label, _OK, f"Set ([dim]{masked}[/dim])")
+            add(_OK, label, f"Set ({masked})")
             any_key = True
 
     if not any_key and backend == "claude_cli":
-        table.add_row("API keys", _WARN, "None set — using Claude Code subscription (OK)")
+        add(_WARN, "API keys", "None set — using Claude Code subscription (OK)")
     elif not any_key:
-        table.add_row("API keys", _WARN, "No API keys found — check .env or export them")
+        add(_WARN, "API keys", "No API keys found — check .env or export them")
 
     # ── Base URL ─────────────────────────────────────────────────────────────
     base_url = _resolve_base_url(backend)
     if base_url:
-        table.add_row("Base URL", _OK, f"[dim]{base_url}[/dim]")
+        add(_OK, "Base URL", base_url)
 
-    # ── Live connectivity test ────────────────────────────────────────────────
+    # ── JSON output ──────────────────────────────────────────────────────────
+    if json_out:
+        print(json.dumps({"checks": rows}, indent=2))
+        return
+
+    # ── Rich table ───────────────────────────────────────────────────────────
+    table = Table(title="👵 grandma doctor", show_lines=False, expand=False)
+    table.add_column("Check", style="bold", min_width=24)
+    table.add_column("Status", justify="center", min_width=4)
+    table.add_column("Detail", min_width=48)
+
+    status_icon = {v: k for k, v in _STATUS_TEXT.items()}
+    for r in rows:
+        table.add_row(r["check"], status_icon.get(r["status"], r["status"]), r["detail"])
+
     console.print(table)
     console.print()
 
+    # ── Live connectivity test ────────────────────────────────────────────────
     with console.status("[bold]Testing backend connectivity…[/bold]", spinner="dots"):
         try:
             from grandma.extractor import extract

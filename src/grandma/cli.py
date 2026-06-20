@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import sys
 from typing import Optional
 
@@ -48,6 +49,31 @@ _DEMO_DEEP = Verdict(
 )
 
 
+def _read_clipboard() -> str:
+    """Read text from the system clipboard. Tries pyperclip, then platform tools."""
+    try:
+        import pyperclip  # type: ignore[import-untyped]
+
+        return pyperclip.paste()
+    except ImportError:
+        pass
+
+    if sys.platform == "darwin":
+        result = subprocess.run(["pbpaste"], capture_output=True, text=True)
+        return result.stdout
+    # Linux (xclip / xsel)
+    for cmd in (["xclip", "-selection", "clipboard", "-o"], ["xsel", "--clipboard", "--output"]):
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout
+        except FileNotFoundError:
+            continue
+    raise RuntimeError(
+        "Clipboard read failed. Install pyperclip (`pip install pyperclip`) or xclip/xsel."
+    )
+
+
 @app.command()
 def main(
     text: Optional[str] = typer.Argument(None, help="LLM output to process, or pipe via stdin"),
@@ -59,6 +85,7 @@ def main(
     ),
     json_out: bool = typer.Option(False, "--json", "-j", help="Output raw JSON instead of a card"),
     demo: bool = typer.Option(False, "--demo", help="Show example output without calling the API"),
+    paste: bool = typer.Option(False, "--paste", "-p", help="Read input from the system clipboard"),
 ) -> None:
     if demo:
         verdict = _DEMO_DEEP if mode is Mode.DEEP else _DEMO_DEFAULT
@@ -68,13 +95,19 @@ def main(
             render(verdict, mode=mode)
         return
 
-    if text is None:
+    if paste:
+        try:
+            text = _read_clipboard()
+        except RuntimeError as exc:
+            err.print(f"[red]Clipboard error:[/red] {exc}")
+            raise typer.Exit(1)
+    elif text is None:
         if sys.stdin.isatty():
-            err.print("[red]Error:[/red] give grandma some text or pipe it in")
+            err.print("[red]Error:[/red] give grandma some text, pipe it in, or use --paste")
             raise typer.Exit(1)
         text = sys.stdin.read()
 
-    if not text.strip():
+    if not text or not text.strip():
         err.print("[red]Error:[/red] empty input")
         raise typer.Exit(1)
 
@@ -113,11 +146,13 @@ def serve() -> None:
 
 
 @app.command()
-def doctor() -> None:
+def doctor(
+    json_out: bool = typer.Option(False, "--json", "-j", help="Output diagnostics as JSON"),
+) -> None:
     """Check backend config, API keys, model setup, and connectivity."""
     from grandma.commands.doctor import run
 
-    run()
+    run(json_out=json_out)
 
 
 @app.command()
@@ -125,11 +160,14 @@ def replay(
     n: int = typer.Option(6, "--turns", "-n", help="Number of last assistant turns to digest"),
     mode: str = typer.Option("default", "--mode", "-m", help="Extraction mode: default or deep"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show log path being used"),
+    source: Optional[str] = typer.Option(
+        None, "--source", "-s", help="Path to a specific log file instead of auto-detecting"
+    ),
 ) -> None:
     """Digest the last Claude Code / Codex / aider / Gemini CLI session."""
     from grandma.commands.replay import run
 
-    run(n=n, mode_str=mode, verbose=verbose)
+    run(n=n, mode_str=mode, verbose=verbose, source=source)
 
 
 if __name__ == "__main__":

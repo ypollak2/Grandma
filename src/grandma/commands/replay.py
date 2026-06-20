@@ -102,9 +102,19 @@ def _extract_messages_log(path: Path, n: int = 6) -> List[str]:
         return []
 
 
-def run(n: int = 6, mode_str: str = "default", verbose: bool = False) -> None:
+def run(
+    n: int = 6, mode_str: str = "default", verbose: bool = False, source: Optional[str] = None
+) -> None:
     """Find the latest session log, extract messages, and print a grandma digest card."""
-    found = _find_latest_log()
+    if source:
+        source_path = Path(source).expanduser()
+        if not source_path.exists():
+            console.print(f"[red]Error:[/red] path not found: {source_path}")
+            return
+        found = ("custom", source_path)
+    else:
+        found = _find_latest_log()
+
     if not found:
         console.print("[yellow]⚠️  No session logs found.[/yellow]")
         console.print(
