@@ -14,7 +14,23 @@ try:
 except ImportError:
     pass  # python-dotenv is optional; env vars still work without it
 
-from grandma.card import render
+# Load ~/.grandma.env (user config file) — lower priority than shell env vars
+from grandma.commands.config import CONFIG_FILE as _CONFIG_FILE
+
+if _CONFIG_FILE.exists():
+    try:
+        from dotenv import load_dotenv as _lde
+
+        _lde(_CONFIG_FILE, override=False)
+    except ImportError:
+        # Manual fallback: read KEY=VALUE lines without python-dotenv
+        for _line in _CONFIG_FILE.read_text().splitlines():
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _, _v = _line.partition("=")
+                os.environ.setdefault(_k.strip(), _v.strip())
+
+from grandma.card import THEMES, render
 from grandma.extractor import extract
 from grandma.models import Impact, Mode, Verdict
 
@@ -86,13 +102,19 @@ def main(
     json_out: bool = typer.Option(False, "--json", "-j", help="Output raw JSON instead of a card"),
     demo: bool = typer.Option(False, "--demo", help="Show example output without calling the API"),
     paste: bool = typer.Option(False, "--paste", "-p", help="Read input from the system clipboard"),
+    theme: Optional[str] = typer.Option(
+        None,
+        "--theme",
+        "-t",
+        help=f"Card theme: {', '.join(THEMES)}",
+    ),
 ) -> None:
     if demo:
         verdict = _DEMO_DEEP if mode is Mode.DEEP else _DEMO_DEFAULT
         if json_out:
             typer.echo(verdict.model_dump_json(indent=2))
         else:
-            render(verdict, mode=mode)
+            render(verdict, mode=mode, theme=theme)
         return
 
     if paste:
@@ -134,7 +156,7 @@ def main(
     elif json_out:
         typer.echo(result.model_dump_json(indent=2))
     else:
-        render(result, mode=mode)
+        render(result, mode=mode, theme=theme)
 
 
 @app.command()
@@ -168,6 +190,37 @@ def replay(
     from grandma.commands.replay import run
 
     run(n=n, mode_str=mode, verbose=verbose, source=source)
+
+
+@app.command()
+def config(
+    action: str = typer.Argument(..., help="Action: set, get, unset, list"),
+    key: Optional[str] = typer.Argument(None, help="Config key (e.g. backend, model, theme)"),
+    value: Optional[str] = typer.Argument(None, help="Value to set"),
+) -> None:
+    """Get, set, or list persistent grandma configuration (~/.grandma.env)."""
+    from grandma.commands.config import cmd_get, cmd_list, cmd_set, cmd_unset
+
+    if action == "list":
+        cmd_list()
+    elif action == "set":
+        if not key or value is None:
+            err.print("[red]Usage:[/red] grandma config set <key> <value>")
+            raise typer.Exit(1)
+        cmd_set(key, value)
+    elif action == "get":
+        if not key:
+            err.print("[red]Usage:[/red] grandma config get <key>")
+            raise typer.Exit(1)
+        cmd_get(key)
+    elif action == "unset":
+        if not key:
+            err.print("[red]Usage:[/red] grandma config unset <key>")
+            raise typer.Exit(1)
+        cmd_unset(key)
+    else:
+        err.print(f"[red]Unknown action:[/red] {action}. Use set, get, unset, or list.")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
